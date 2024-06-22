@@ -1,0 +1,35 @@
+version: '3.4'
+
+services:
+  template.api:
+    image: ${DOCKER_REGISTRY-}presentation
+    container_name: template.api
+    build:
+      context: .
+      dockerfile: Presentation/Dockerfile
+
+  template.database:
+    image: mcr.microsoft.com/mssql/server
+    container_name: template.database
+    ports:
+      - 1433:1433
+    environment:
+      SA_PASSWORD: "Password123!"
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: Developer
+    volumes:
+      - ./Database:/var/opt/mssql/data
+
+  template.cache:
+    image: redis
+    container_name: template.cache
+    ports:
+      - 6379:6379
+    restart: always
+
+  template.smtp:
+    image: mailhog/mailhog
+    container_name: template.smtp
+    ports:
+      - 8025:8025
+      - 1025:1025
