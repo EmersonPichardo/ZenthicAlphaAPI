@@ -10,9 +10,9 @@ public record JwtSettings
     [Required]
     public required string Issuer { get; init; }
 
-    [Required, Range(typeof(TimeSpan), "72:00:00", "4383:00:00")]
+    [Required]
     public required TimeSpan RefreshTokenLifetime { get; init; }
 
-    [Required, Range(typeof(TimeSpan), "00:01:00", "72:00:00")]
+    [Required]
     public required TimeSpan TokenLifetime { get; init; }
 }

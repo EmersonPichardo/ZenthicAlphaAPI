@@ -1,51 +1,45 @@
-﻿using Application._Common.Events;
-using Application._Common.Persistence.Databases;
+﻿using Application._Common.Persistence.Databases;
 using Application._Common.Security.Authentication;
-using Application._Common.Settings;
 using Application.Users.ClearSession;
-using Application.Users.Login;
+using Application.Users.RefreshToken;
 using Domain.Security;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
-namespace Infrastructure.Users.Login;
+namespace Infrastructure.Users.RefreshToken;
 
-internal class LoginUserCommandHandler(
+internal class RefreshUserTokenCommandHandler(
+    IIdentityService identityService,
     IApplicationDbContext dbContext,
-    IPasswordHasher passwordHasher,
     IJwtService jwtService,
-    ISender mediator,
-    IEventPublisher eventPublisher
+    ISender mediator
 )
-    : ILoginUserCommandHandler
+    : IRefreshUserTokenCommandHandler
 {
-    public async Task<LoginUserCommandResponse> Handle(LoginUserCommand command, CancellationToken cancellationToken)
+    public async Task<RefreshUserTokenCommandResponse> Handle(RefreshUserTokenCommand command, CancellationToken cancellationToken)
     {
+        if (identityService.IsNotRefreshTokenCaller())
+            throw new UnauthorizedAccessException();
+
+        var currentUserId = identityService
+            .GetCurrentUserIdentity()?
+            .Id
+        ?? throw new UnauthorizedAccessException();
+
         var foundUser = await dbContext
             .Users
             .AsNoTrackingWithIdentityResolution()
             .Include(entity => entity.UserRoles)
                 .ThenInclude(entity => entity.Role)
                     .ThenInclude(entity => entity != null ? entity.Permissions : null)
-            .AsSingleQuery()
             .SingleOrDefaultAsync(
                 user
-                    => user.Email.Equals(command.Email)
+                    => user.Id.Equals(currentUserId)
                     && !user.Status.Equals(UserStatus.Inactive),
                 cancellationToken
             )
         ?? throw new UnauthorizedAccessException();
 
-        var hashingSettings = new HashingSettings()
-        {
-            Algorithm = foundUser.Algorithm,
-            Iterations = foundUser.Iterations
-        };
-
-        var hashedPassword = passwordHasher.Hash(command.Password, foundUser.Salt, hashingSettings);
-
-        if (!hashedPassword.Equals(foundUser.Password, StringComparison.Ordinal))
-            throw new UnauthorizedAccessException();
 
         var userAccess = foundUser
             .UserRoles
@@ -63,7 +57,7 @@ internal class LoginUserCommandHandler(
                 entity => entity.Aggregate((accessLevel, rolePermission) => accessLevel | rolePermission)
             );
 
-        var response = new LoginUserCommandResponse()
+        var response = new RefreshUserTokenCommandResponse()
         {
             DisplayName = foundUser.FullName,
             Status = foundUser.Status.ToString(),
@@ -83,10 +77,6 @@ internal class LoginUserCommandHandler(
         await mediator.Send(
             new ClearUserSessionCommand() { UserId = foundUser.Id },
             cancellationToken
-        );
-
-        eventPublisher.EnqueueEvent(
-            new UserLoggedInEvent() { Entity = foundUser, Session = response }
         );
 
         return response;

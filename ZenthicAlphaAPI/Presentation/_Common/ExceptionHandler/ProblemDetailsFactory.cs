@@ -1,7 +1,7 @@
 ﻿using Application._Common.Exceptions;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Presentation._Common.Middleware.ExceptionHandler;
+namespace Presentation._Common.ExceptionHandler;
 
 internal static class ProblemDetailsFactory
 {
@@ -9,7 +9,7 @@ internal static class ProblemDetailsFactory
         (HttpContext httpContext, Exception exception) => new()
         {
             Status = StatusCodes.Status401Unauthorized,
-            Title = "Access denied.",
+            Title = "Access denied",
             Detail = exception.Message,
             Instance = ConstructInstance(httpContext),
             Type = "https://datatracker.ietf.org/doc/html/rfc7235#section-3.1"
@@ -19,7 +19,7 @@ internal static class ProblemDetailsFactory
         (HttpContext httpContext, Exception exception) => new()
         {
             Status = StatusCodes.Status403Forbidden,
-            Title = "Access denied.",
+            Title = "Access denied",
             Detail = exception.Message,
             Instance = ConstructInstance(httpContext),
             Type = "https://datatracker.ietf.org/doc/html/rfc7231#section-6.5.3"
@@ -29,7 +29,7 @@ internal static class ProblemDetailsFactory
         (HttpContext httpContext, Exception exception) => new()
         {
             Status = StatusCodes.Status404NotFound,
-            Title = "Resource not found.",
+            Title = "Resource not found",
             Detail = exception.Message,
             Instance = ConstructInstance(httpContext),
             Type = "https://datatracker.ietf.org/doc/html/rfc7231#section-6.5.4"
@@ -39,21 +39,20 @@ internal static class ProblemDetailsFactory
         (HttpContext httpContext, ValidationException validationException) => new()
         {
             Status = StatusCodes.Status422UnprocessableEntity,
-            Title = "Validation error.",
+            Title = "Validation error",
             Detail = validationException.Message,
             Instance = ConstructInstance(httpContext),
             Type = "https://datatracker.ietf.org/doc/html/rfc7231#section-6.5.1",
             Extensions = {
-                ["errors"] = validationException.Errors
+                ["errors"] = validationException.Errors.Select(error => new{ Title = error.Key, Detail = error.Value })
             }
         };
 
     public static ProblemDetails InternalServerProblem
-        (HttpContext httpContext, Exception exception) => new()
+        (HttpContext httpContext) => new()
         {
             Status = StatusCodes.Status500InternalServerError,
-            Title = "An internal unexpected error happened.",
-            Detail = exception.Message,
+            Title = "An internal unexpected error happened",
             Instance = ConstructInstance(httpContext),
             Type = "https://datatracker.ietf.org/doc/html/rfc7231#section-6.6.1"
         };

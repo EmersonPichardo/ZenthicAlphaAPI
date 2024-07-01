@@ -1,5 +1,3 @@
-version: '3.4'
-
 services:
   template.api:
     image: ${DOCKER_REGISTRY-}presentation

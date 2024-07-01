@@ -9,7 +9,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Models;
 using Presentation._Common.Endpoints;
-using Presentation._Common.Middleware.ExceptionHandler;
+using Presentation._Common.ExceptionHandler;
 using Presentation._Common.Security;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using System.Reflection;
@@ -149,6 +149,11 @@ internal static partial class ConfigureBuilder
         services
             .AddOptions<SmtpSettings>()
             .Bind(configuration.GetRequiredSection(nameof(SmtpSettings)))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+        services
+            .AddOptions<PerformanceSettings>()
+            .Bind(configuration.GetRequiredSection(nameof(PerformanceSettings)))
             .ValidateDataAnnotations()
             .ValidateOnStart();
 

@@ -5,7 +5,7 @@ namespace Application._Common.Exceptions;
 
 public class ValidationException : Exception
 {
-    public IDictionary<string, dynamic?> Errors { get; }
+    public IReadOnlyDictionary<string, dynamic?> Errors { get; }
 
     private const string propertyNameIdentifier = "PropertyName";
     private const string arrayIdentifier = "CollectionIndex";

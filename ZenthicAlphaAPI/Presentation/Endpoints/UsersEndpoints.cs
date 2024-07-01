@@ -5,6 +5,7 @@ using Application.Users.GetAll;
 using Application.Users.GetPaginated;
 using Application.Users.Login;
 using Application.Users.Logout;
+using Application.Users.RefreshToken;
 using Application.Users.ResetPassword;
 using MediatR;
 using Presentation._Common.Endpoints;
@@ -26,6 +27,9 @@ public class UsersEndpoints : BaseEndpointCollection
         DefineEndpoint(HttpVerbose.Post, "/login",
             Login, 200, typeof(LoginUserCommandResponse));
 
+        DefineEndpoint(HttpVerbose.Post, "/refresh-token",
+            RefreshToken, 200, typeof(RefreshUserTokenCommandResponse));
+
         DefineEndpoint(HttpVerbose.Post, "/logout",
             Logout, 200);
 
@@ -39,6 +43,13 @@ public class UsersEndpoints : BaseEndpointCollection
     private async Task<IResult> Login(ISender mediator, LoginUserCommand command)
     {
         var response = await mediator.Send(command);
+        return Results.Ok(response);
+    }
+    private async Task<IResult> RefreshToken(ISender mediator)
+    {
+        var command = new RefreshUserTokenCommand();
+        var response = await mediator.Send(command);
+
         return Results.Ok(response);
     }
     private async Task<IResult> Logout(ISender mediator)

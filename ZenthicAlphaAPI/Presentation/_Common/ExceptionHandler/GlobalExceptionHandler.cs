@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Presentation._Common.Middleware.ExceptionHandler;
+namespace Presentation._Common.ExceptionHandler;
 
 internal class GlobalExceptionHandler : IExceptionHandler
 {
@@ -25,7 +25,7 @@ internal class GlobalExceptionHandler : IExceptionHandler
             ValidationException validationException
                 => ProblemDetailsFactory.ValidationProblem(httpContext, validationException),
 
-            _ => ProblemDetailsFactory.InternalServerProblem(httpContext, exception)
+            _ => ProblemDetailsFactory.InternalServerProblem(httpContext)
         };
 
         httpContext.Response.StatusCode = problem.Status.GetValueOrDefault();
