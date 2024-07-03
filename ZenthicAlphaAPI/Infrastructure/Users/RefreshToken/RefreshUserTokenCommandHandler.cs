@@ -1,10 +1,12 @@
-﻿using Application._Common.Persistence.Databases;
+﻿using Application._Common.Failures;
+using Application._Common.Persistence.Databases;
 using Application._Common.Security.Authentication;
 using Application.Users.ClearSession;
 using Application.Users.RefreshToken;
 using Domain.Security;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using OneOf;
 
 namespace Infrastructure.Users.RefreshToken;
 
@@ -16,15 +18,21 @@ internal class RefreshUserTokenCommandHandler(
 )
     : IRefreshUserTokenCommandHandler
 {
-    public async Task<RefreshUserTokenCommandResponse> Handle(RefreshUserTokenCommand command, CancellationToken cancellationToken)
+    public async Task<OneOf<RefreshUserTokenCommandResponse, Failure>> Handle(RefreshUserTokenCommand command, CancellationToken cancellationToken)
     {
         if (identityService.IsNotRefreshTokenCaller())
             throw new UnauthorizedAccessException();
 
-        var currentUserId = identityService
-            .GetCurrentUserIdentity()?
-            .Id
-        ?? throw new UnauthorizedAccessException();
+        var currentUserIdentityResult = identityService
+            .GetCurrentUserIdentity();
+
+        if (currentUserIdentityResult.IsT1)
+            return FailureFactory.UnauthorizedAccess();
+
+        if (currentUserIdentityResult.IsT2)
+            return currentUserIdentityResult.AsT2;
+
+        var currentUserId = currentUserIdentityResult.AsT0.Id;
 
         var foundUser = await dbContext
             .Users
@@ -37,9 +45,10 @@ internal class RefreshUserTokenCommandHandler(
                     => user.Id.Equals(currentUserId)
                     && !user.Status.Equals(UserStatus.Inactive),
                 cancellationToken
-            )
-        ?? throw new UnauthorizedAccessException();
+            );
 
+        if (foundUser is null)
+            return FailureFactory.UnauthorizedAccess();
 
         var userAccess = foundUser
             .UserRoles

@@ -22,7 +22,7 @@ internal class PerformanceBehavior<TRequest, TResponse>(
         CancellationToken cancellationToken)
     {
         timer.Start();
-        var response = await next();
+        var response = await next().ConfigureAwait(false);
         timer.Stop();
 
         var milliseconds = timer.ElapsedMilliseconds;

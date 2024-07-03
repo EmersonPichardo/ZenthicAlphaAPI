@@ -1,9 +1,11 @@
-﻿using Application._Common.Exceptions;
+﻿using Application._Common.Failures;
 using Application._Common.Security.Authentication;
 using Application._Common.Security.Authorization;
 using Application.Users.ChangePassword;
 using Domain.Security;
 using MediatR;
+using OneOf;
+using OneOf.Types;
 using System.Reflection;
 
 namespace Infrastructure._Common.Behaviors;
@@ -21,12 +23,21 @@ internal class AuthorizationBehavior<TRequest, TResponse>(
         CancellationToken cancellationToken)
     {
         if (IsAnonymousCall(request))
-            return await next();
+            return await next().ConfigureAwait(false);
 
-        var currentUser = await ValidateCurrentUserStatusAsync(request);
-        ValidateAccessLevel(request, currentUser);
+        var validCurrentUserResult = await GetValidCurrentUserAsync(request);
 
-        return await next();
+        if (validCurrentUserResult.IsT1)
+            return (dynamic)validCurrentUserResult.AsT1;
+
+        var currentUser = validCurrentUserResult.AsT0;
+
+        var validateAccessLevelResult = ValidateAccessLevel(currentUser, request);
+
+        if (validateAccessLevelResult.IsT1)
+            return (dynamic)validateAccessLevelResult.AsT1;
+
+        return await next().ConfigureAwait(false);
     }
 
     private static bool IsAnonymousCall(TRequest request)
@@ -37,28 +48,38 @@ internal class AuthorizationBehavior<TRequest, TResponse>(
 
         return allowAnonymousAttribute is not null;
     }
-    private async Task<ICurrentUser> ValidateCurrentUserStatusAsync(TRequest request)
+    private async Task<OneOf<ICurrentUser, Failure>> GetValidCurrentUserAsync(TRequest request)
     {
         if (identityService.IsCurrentUserNotAuthenticated())
-            throw new UnauthorizedAccessException();
+            return FailureFactory.UnauthorizedAccess("", "");
 
-        var currentUser = await currentUserService
-            .GetCurrentUserAsync()
-        ?? throw new UnauthorizedAccessException();
+        var currentUserResult = await currentUserService
+            .GetCurrentUserAsync();
 
-        if (currentUser.Status is UserStatus.RequiredPasswordChange && request is not ChangeUserPasswordCommand)
-            throw new PasswordChangeRequiredException();
-
-        return currentUser;
+        return currentUserResult.Match(
+            currentUser => ValidateCurrentUser(currentUser, request).Match(
+                none => OneOf<ICurrentUser, Failure>.FromT0(currentUser),
+                failure => failure
+            ),
+            none => FailureFactory.UnauthorizedAccess("", ""),
+            failure => failure
+        );
     }
-    private static void ValidateAccessLevel(TRequest request, ICurrentUser currentUser)
+    private static OneOf<None, Failure> ValidateCurrentUser(ICurrentUser currentUser, TRequest request)
+    {
+        if (currentUser.Status is UserStatus.RequiredPasswordChange && request is not ChangeUserPasswordCommand)
+            return FailureFactory.PasswordChangeRequired("", "");
+
+        return new None();
+    }
+    private static OneOf<None, Failure> ValidateAccessLevel(ICurrentUser currentUser, TRequest request)
     {
         var authorizeAttribute = request
             .GetType()
             .GetCustomAttribute<AuthorizeAttribute>();
 
         if (authorizeAttribute is null)
-            return;
+            return new None();
 
         var (component, requiredAccess)
             = authorizeAttribute.GetData();
@@ -68,6 +89,8 @@ internal class AuthorizationBehavior<TRequest, TResponse>(
             .GetValueOrDefault(component, 0);
 
         if ((userAccess & requiredAccess) is 0)
-            throw new ForbiddenAccessException();
+            return FailureFactory.ForbiddenAccess("", "");
+
+        return new None();
     }
 }

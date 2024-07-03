@@ -11,7 +11,6 @@ internal static class MappingExtensions
         int? currentPage,
         int? pageSize,
         CancellationToken cancellationToken = default)
-        where TDestination : class
     {
         return PaginatedList<TDestination>.CreateAsync(
             queryable,

@@ -21,8 +21,7 @@ internal abstract class GetAllEntitiesQueryHandler<TQuery, TResponse, TEntity>(
     {
         var entities = dbContext
             .Set<TEntity>()
-            .AsNoTrackingWithIdentityResolution()
-            .AsSplitQuery();
+            .AsNoTrackingWithIdentityResolution();
 
         return await entities
             .ProjectTo<TResponse>(mapper.ConfigurationProvider)

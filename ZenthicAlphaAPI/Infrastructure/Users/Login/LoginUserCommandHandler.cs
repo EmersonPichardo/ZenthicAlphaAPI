@@ -1,4 +1,5 @@
 ﻿using Application._Common.Events;
+using Application._Common.Failures;
 using Application._Common.Persistence.Databases;
 using Application._Common.Security.Authentication;
 using Application._Common.Settings;
@@ -7,6 +8,7 @@ using Application.Users.Login;
 using Domain.Security;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using OneOf;
 
 namespace Infrastructure.Users.Login;
 
@@ -19,7 +21,7 @@ internal class LoginUserCommandHandler(
 )
     : ILoginUserCommandHandler
 {
-    public async Task<LoginUserCommandResponse> Handle(LoginUserCommand command, CancellationToken cancellationToken)
+    public async Task<OneOf<LoginUserCommandResponse, Failure>> Handle(LoginUserCommand command, CancellationToken cancellationToken)
     {
         var foundUser = await dbContext
             .Users
@@ -33,8 +35,10 @@ internal class LoginUserCommandHandler(
                     => user.Email.Equals(command.Email)
                     && !user.Status.Equals(UserStatus.Inactive),
                 cancellationToken
-            )
-        ?? throw new UnauthorizedAccessException();
+            );
+
+        if (foundUser is null)
+            return FailureFactory.UnauthorizedAccess(detail: "Email incorrecto o contraseña incorrecta");
 
         var hashingSettings = new HashingSettings()
         {
@@ -45,7 +49,7 @@ internal class LoginUserCommandHandler(
         var hashedPassword = passwordHasher.Hash(command.Password, foundUser.Salt, hashingSettings);
 
         if (!hashedPassword.Equals(foundUser.Password, StringComparison.Ordinal))
-            throw new UnauthorizedAccessException();
+            return FailureFactory.UnauthorizedAccess(detail: "Email incorrecto o contraseña incorrecta");
 
         var userAccess = foundUser
             .UserRoles

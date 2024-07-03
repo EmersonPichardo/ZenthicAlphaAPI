@@ -9,6 +9,7 @@ using Application.Users.RefreshToken;
 using Application.Users.ResetPassword;
 using MediatR;
 using Presentation._Common.Endpoints;
+using Presentation._Common.ExceptionHandler;
 
 namespace Presentation.Endpoints;
 
@@ -42,31 +43,49 @@ public class UsersEndpoints : BaseEndpointCollection
 
     private async Task<IResult> Login(ISender mediator, LoginUserCommand command)
     {
-        var response = await mediator.Send(command);
-        return Results.Ok(response);
+        var result = await mediator.Send(command);
+
+        return result.Match(
+            ResultFactory.Ok,
+            ResultFactory.ProblemDetails
+        );
     }
     private async Task<IResult> RefreshToken(ISender mediator)
     {
         var command = new RefreshUserTokenCommand();
-        var response = await mediator.Send(command);
+        var result = await mediator.Send(command);
 
-        return Results.Ok(response);
+        return result.Match(
+            ResultFactory.Ok,
+            ResultFactory.ProblemDetails
+        );
     }
     private async Task<IResult> Logout(ISender mediator)
     {
         var command = new LogoutCurrentUserCommand();
-        await mediator.Send(command);
+        var result = await mediator.Send(command);
 
-        return Results.Ok();
+        return result.Match(
+            ResultFactory.Ok,
+            ResultFactory.ProblemDetails
+        );
     }
     private async Task<IResult> ResetPassword(ISender mediator, ResetUserPasswordCommand command)
     {
-        await mediator.Send(command);
-        return Results.Ok();
+        var result = await mediator.Send(command);
+
+        return result.Match(
+            ResultFactory.Ok,
+            ResultFactory.ProblemDetails
+        );
     }
     private async Task<IResult> ChangePassword(ISender mediator, ChangeUserPasswordCommand command)
     {
-        await mediator.Send(command);
-        return Results.Ok();
+        var result = await mediator.Send(command);
+
+        return result.Match(
+            ResultFactory.Ok,
+            ResultFactory.ProblemDetails
+        );
     }
 }

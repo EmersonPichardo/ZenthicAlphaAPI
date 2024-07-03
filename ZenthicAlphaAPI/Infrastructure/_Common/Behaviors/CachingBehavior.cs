@@ -11,7 +11,7 @@ internal class CachingBehavior<TRequest, TResponse>(
     ICacheStore cacheStore
 )
     : IPipelineBehavior<TRequest, TResponse>
-    where TRequest : IBaseRequest
+    where TRequest : notnull
     where TResponse : new()
 {
     public async Task<TResponse> Handle(
@@ -24,7 +24,7 @@ internal class CachingBehavior<TRequest, TResponse>(
             .GetCustomAttribute<CacheAttribute>();
 
         if (cacheAttribute is null)
-            return await next();
+            return await next().ConfigureAwait(false);
 
         var tag = cacheAttribute.GetTag();
 
@@ -32,7 +32,7 @@ internal class CachingBehavior<TRequest, TResponse>(
         {
             IBaseQuery => await QueryCacheHandlerAsync(tag, request, next, cancellationToken),
             IBaseCommand => await CommandCacheHandlerAsync(tag, next, cancellationToken),
-            _ => await next()
+            _ => await next().ConfigureAwait(false)
         };
 
         return response;
@@ -50,7 +50,7 @@ internal class CachingBehavior<TRequest, TResponse>(
         if (cachedResponse is not null)
             return cachedResponse;
 
-        var response = await next();
+        var response = await next().ConfigureAwait(false);
 
         await cacheStore.SetAsync(tag, key, await next(), cancellationToken);
 
@@ -63,6 +63,6 @@ internal class CachingBehavior<TRequest, TResponse>(
     {
         await cacheStore.ClearByTagAsync(tag, cancellationToken);
 
-        return await next();
+        return await next().ConfigureAwait(false);
     }
 }

@@ -1,9 +1,12 @@
 ﻿using Application._Common.Events;
+using Application._Common.Failures;
 using Application._Common.Helpers;
 using Application._Common.Persistence.Databases;
 using Application.Roles.Add;
 using Domain._Common.Modularity;
 using Domain.Security;
+using OneOf;
+using OneOf.Types;
 using System.Collections;
 
 namespace Infrastructure.Roles.Add;
@@ -14,7 +17,7 @@ internal class AddRoleCommandHandler(
 )
     : IAddRoleCommandHandler
 {
-    public async Task Handle(AddRoleCommand command, CancellationToken cancellationToken)
+    public async Task<OneOf<None, Failure>> Handle(AddRoleCommand command, CancellationToken cancellationToken)
     {
         var newRole = new Role
         {
@@ -41,5 +44,7 @@ internal class AddRoleCommandHandler(
                 Entity = newRole
             }
         );
+
+        return new None();
     }
 }

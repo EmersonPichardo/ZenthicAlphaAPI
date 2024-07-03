@@ -1,8 +1,11 @@
 ﻿using Application._Common.Events;
+using Application._Common.Failures;
 using Application._Common.Persistence.Databases;
 using Application._Common.Security.Authentication;
 using Application.Users.Add;
 using Domain.Security;
+using OneOf;
+using OneOf.Types;
 
 namespace Infrastructure.Users.Add;
 
@@ -13,7 +16,7 @@ internal class AddUserCommandHandler(
 )
     : IAddUserCommandHandler
 {
-    public async Task Handle(AddUserCommand command, CancellationToken cancellationToken)
+    public async Task<OneOf<None, Failure>> Handle(AddUserCommand command, CancellationToken cancellationToken)
     {
         (var newPassword, var hashedPassword, var salt, var algorithm, var iterations)
             = passwordHasher.GenerateNewPassword();
@@ -45,5 +48,7 @@ internal class AddUserCommandHandler(
                 NewPassword = newPassword
             }
         );
+
+        return new None();
     }
 }

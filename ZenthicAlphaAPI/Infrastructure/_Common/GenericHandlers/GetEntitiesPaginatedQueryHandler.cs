@@ -15,7 +15,6 @@ internal abstract class GetEntitiesPaginatedQueryHandler<TQuery, TResponse, TEnt
     Func<string?, Expression<Func<TResponse, bool>>> getFilterExpression
 )
     where TQuery : GetEntitiesPaginatedQuery<TResponse>
-    where TResponse : class
     where TEntity : class, ICompoundEntity
 {
     public async Task<PaginatedList<TResponse>> Handle(
@@ -24,8 +23,7 @@ internal abstract class GetEntitiesPaginatedQueryHandler<TQuery, TResponse, TEnt
     {
         var entities = dbContext
             .Set<TEntity>()
-            .AsNoTrackingWithIdentityResolution()
-            .AsSplitQuery();
+            .AsNoTrackingWithIdentityResolution();
 
         return await entities
             .OrderBy(entity => entity.ClusterId)

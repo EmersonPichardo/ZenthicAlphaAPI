@@ -1,16 +1,27 @@
 ﻿using FluentValidation.Results;
 using System.Dynamic;
 
-namespace Application._Common.Exceptions;
+namespace Application._Common.Failures;
 
-public class ValidationException : Exception
+public record InvalidRequestFailure : Failure
 {
-    public IReadOnlyDictionary<string, dynamic?> Errors { get; }
-
     private const string propertyNameIdentifier = "PropertyName";
     private const string arrayIdentifier = "CollectionIndex";
 
-    public ValidationException(IEnumerable<ValidationFailure> failures)
+    private InvalidRequestFailure() { }
+
+    internal static InvalidRequestFailure New(
+        string title,
+        string? detail = null,
+        IDictionary<string, object?>? extensions = null
+    ) => new()
+    {
+        Title = title,
+        Detail = detail,
+        Extensions = extensions ?? new Dictionary<string, object?>()
+    };
+
+    internal static InvalidRequestFailure New(string title, IEnumerable<ValidationFailure> failures)
     {
         var notArrayErrors = failures
             .Where(IsNotArray)
@@ -34,7 +45,12 @@ public class ValidationException : Exception
         foreach (var keyValuePair in arrayErrors)
             errors.Add(keyValuePair.Key, GetValidationFailureObjectArray(keyValuePair));
 
-        Errors = errors;
+
+        return new()
+        {
+            Title = title,
+            Extensions = errors
+        };
     }
 
     private static IEnumerable<dynamic?> GetValidationFailureObjectArray(IGrouping<string, ValidationFailureSimple> failureGroup)

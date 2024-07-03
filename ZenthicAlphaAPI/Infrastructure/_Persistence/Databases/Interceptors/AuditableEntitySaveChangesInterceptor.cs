@@ -11,10 +11,6 @@ internal class AuditableEntitySaveChangesInterceptor(
 )
     : SaveChangesInterceptor
 {
-    private readonly Guid? currenUserId = identityService
-        .GetCurrentUserIdentity()?
-        .Id;
-
     public override InterceptionResult<int> SavingChanges(
         DbContextEventData eventData,
         InterceptionResult<int> result)
@@ -37,49 +33,58 @@ internal class AuditableEntitySaveChangesInterceptor(
         if (context is null)
             return;
 
+        var currentUserIdentityResult = identityService
+            .GetCurrentUserIdentity();
+
+        var currentUserId = currentUserIdentityResult.Match<Guid?>(
+            currentUserIdentity => currentUserIdentity.Id,
+            none => null,
+            failure => null
+        );
+
         var entitiesTracked = context
             .ChangeTracker
             .Entries<IAuditableEntity>();
 
         foreach (var entry in entitiesTracked)
-            UpdateEntityByState(entry);
+            UpdateEntityByState(entry, currentUserId);
     }
-    private void UpdateEntityByState(EntityEntry<IAuditableEntity> entry)
+    private static void UpdateEntityByState(EntityEntry<IAuditableEntity> entry, Guid? currentUserId)
     {
         var state = entry.State;
 
         if (state is EntityState.Added)
         {
-            UpdateAddedData(entry);
-            UpdateModifiedData(entry);
+            UpdateAddedData(entry, currentUserId);
+            UpdateModifiedData(entry, currentUserId);
         }
 
         if (state is EntityState.Modified)
-            UpdateModifiedData(entry);
+            UpdateModifiedData(entry, currentUserId);
 
         if (state is EntityState.Deleted)
-            UpdateDeletedData(entry);
+            UpdateDeletedData(entry, currentUserId);
     }
-    private void UpdateAddedData(EntityEntry<IAuditableEntity> entry)
+    private static void UpdateAddedData(EntityEntry<IAuditableEntity> entry, Guid? currentUserId)
     {
         var entity = entry.Entity;
 
-        entity.CreatedBy = currenUserId;
+        entity.CreatedBy = currentUserId;
         entity.CreationDate = DateTime.UtcNow;
     }
-    private void UpdateModifiedData(EntityEntry<IAuditableEntity> entry)
+    private static void UpdateModifiedData(EntityEntry<IAuditableEntity> entry, Guid? currentUserId)
     {
         var entity = entry.Entity;
 
-        entity.LastModifiedBy = currenUserId;
+        entity.LastModifiedBy = currentUserId;
         entity.LastModificationDate = DateTime.UtcNow;
     }
-    private void UpdateDeletedData(EntityEntry<IAuditableEntity> entry)
+    private static void UpdateDeletedData(EntityEntry<IAuditableEntity> entry, Guid? currentUserId)
     {
         var entity = entry.Entity;
 
         entity.IsDeleted = true;
-        entity.DeletedBy = currenUserId;
+        entity.DeletedBy = currentUserId;
         entity.DeletionDate = DateTime.UtcNow;
 
         entry.State = EntityState.Modified;

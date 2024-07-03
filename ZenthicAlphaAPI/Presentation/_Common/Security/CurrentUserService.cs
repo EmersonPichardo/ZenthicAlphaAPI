@@ -1,37 +1,40 @@
 ﻿using Application._Common.Caching;
-using Application._Common.Exceptions;
+using Application._Common.Failures;
 using Application._Common.Persistence.Databases;
 using Application._Common.Security.Authentication;
 using Microsoft.EntityFrameworkCore;
+using OneOf;
+using OneOf.Types;
 
 namespace Presentation._Common.Security;
 
 internal record CurrentUserService(
-    ICacheStore CacheStore,
-    IHttpContextAccessor HttpContextAccessor,
-    IIdentityService IdentityService,
-    IApplicationDbContext DbContext
+    ICacheStore cacheStore,
+    IHttpContextAccessor httpContextAccessor,
+    IIdentityService identityService,
+    IApplicationDbContext dbContext
 )
     : ICurrentUserService
 {
-    public async Task<ICurrentUser?> GetCurrentUserAsync()
+    public async Task<OneOf<ICurrentUser, None, Failure>> GetCurrentUserAsync()
     {
-        var currentUserIdentity = IdentityService.GetCurrentUserIdentity();
+        var currentUserIdentityResult = identityService
+            .GetCurrentUserIdentity();
 
-        if (currentUserIdentity is null)
-            return null;
+        if (currentUserIdentityResult.IsT1)
+            return new None();
 
-        var currentUserId = IdentityService
-            .GetCurrentUserIdentity()?
-            .Id
-        ?? Guid.Empty;
+        if (currentUserIdentityResult.IsT2)
+            return currentUserIdentityResult.AsT2;
 
-        var cancellationToken = HttpContextAccessor
+        var currentUserId = currentUserIdentityResult.AsT0.Id;
+
+        var cancellationToken = httpContextAccessor
             .HttpContext?
             .RequestAborted
         ?? CancellationToken.None;
 
-        var cachedCurrentUser = await CacheStore.GetAsync<CurrentUser>(
+        var cachedCurrentUser = await cacheStore.GetAsync<CurrentUser>(
             $"{nameof(ICurrentUserIdentity)}{{{currentUserId}}}",
             cancellationToken
         );
@@ -39,18 +42,19 @@ internal record CurrentUserService(
         if (cachedCurrentUser is not null)
             return cachedCurrentUser;
 
-        var foundUser = await DbContext
+        var foundUser = await dbContext
             .Users
             .AsNoTrackingWithIdentityResolution()
             .Include(entity => entity.UserRoles)
                 .ThenInclude(entity => entity.Role)
                     .ThenInclude(entity => entity != null ? entity.Permissions : null)
-            .AsSplitQuery()
             .FirstOrDefaultAsync(
                 entity => entity.Id.Equals(currentUserId),
                 cancellationToken
-            )
-        ?? throw new NotFoundException(nameof(DbContext.Users), currentUserId);
+            );
+
+        if (foundUser is null)
+            return FailureFactory.NotFound("User not found", $"No user was found with an Id of {currentUserId}");
 
         var accesses = foundUser
             .UserRoles
@@ -74,7 +78,7 @@ internal record CurrentUserService(
             Accesses = accesses
         };
 
-        await CacheStore.SetAsync(
+        await cacheStore.SetAsync(
             nameof(ICurrentUserIdentity),
             $"{nameof(ICurrentUserIdentity)}{{{currentUserId}}}",
             currentUser,

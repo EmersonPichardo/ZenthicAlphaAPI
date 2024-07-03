@@ -1,7 +1,8 @@
-﻿using Application._Common.Exceptions;
+﻿using Application._Common.Failures;
 using Application._Common.Helpers;
 using Application._Common.Security.Authentication;
-using System.Security.Claims;
+using OneOf;
+using OneOf.Types;
 
 namespace Presentation._Common.Security;
 
@@ -20,13 +21,13 @@ internal class IdentityService(
             ??= (httpContextAccessor.HttpContext?.User?.Identity?.IsAuthenticated ?? false) && IsNotRefreshTokenCaller();
     }
 
-    public ICurrentUserIdentity? GetCurrentUserIdentity()
+    public OneOf<ICurrentUserIdentity, None, Failure> GetCurrentUserIdentity()
     {
         if (currentUserIdentity is not null)
             return currentUserIdentity;
 
         if (IsCurrentUserNotAuthenticated() && IsNotRefreshTokenCaller())
-            return null;
+            return new None();
 
         var claims = httpContextAccessor
             .HttpContext?
@@ -34,13 +35,15 @@ internal class IdentityService(
             .Claims;
 
         if (claims is null)
-            return null;
+            return new None();
 
         var idClaimValue = claims.GetByName(nameof(ICurrentUserIdentity.Id))
             ?? string.Empty;
 
-        currentUserIdentity = Guid.TryParse(idClaimValue, out var id) ? id
-            : throw new NotFoundException(nameof(Claim), idClaimValue);
+        currentUserIdentity = Guid.TryParse(idClaimValue, out var id) ? id : null;
+
+        if (currentUserIdentity is null)
+            return FailureFactory.NotFound("Sesión inválida", "No se encontró el Id de la sesión");
 
         return currentUserIdentity;
     }

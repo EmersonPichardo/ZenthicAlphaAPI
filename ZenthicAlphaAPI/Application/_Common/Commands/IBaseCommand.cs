@@ -1,3 +1,5 @@
-﻿namespace Application._Common.Commands;
+﻿using MediatR;
 
-public interface IBaseCommand;
+namespace Application._Common.Commands;
+
+public interface IBaseCommand : IBaseRequest;

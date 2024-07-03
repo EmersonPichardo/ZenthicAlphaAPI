@@ -1,6 +1,6 @@
-﻿using FluentValidation;
+﻿using Application._Common.Failures;
+using FluentValidation;
 using MediatR;
-using ValidationException = Application._Common.Exceptions.ValidationException;
 
 namespace Infrastructure._Common.Behaviors;
 
@@ -18,7 +18,7 @@ internal class ValidationBehavior<TRequest, TResponse>(
         var isValidatorsCountGot = validators.TryGetNonEnumeratedCount(out var validatorsCount);
 
         if (isValidatorsCountGot ? validatorsCount is 0 : !validators.Any())
-            return await next();
+            return await next().ConfigureAwait(false);
 
         var context = new ValidationContext<TRequest>(request);
 
@@ -36,8 +36,8 @@ internal class ValidationBehavior<TRequest, TResponse>(
         var isFailuresCountGot = failures.TryGetNonEnumeratedCount(out var failuresCount);
 
         if (isFailuresCountGot ? failuresCount > 0 : failures.Any())
-            throw new ValidationException(failures);
+            return (dynamic)FailureFactory.InvalidRequest("Invalid request", failures);
 
-        return await next();
+        return await next().ConfigureAwait(false);
     }
 }

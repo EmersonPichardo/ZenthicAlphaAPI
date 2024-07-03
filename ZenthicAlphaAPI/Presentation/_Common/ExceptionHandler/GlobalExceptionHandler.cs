@@ -1,5 +1,4 @@
-﻿using Application._Common.Exceptions;
-using Microsoft.AspNetCore.Diagnostics;
+﻿using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Presentation._Common.ExceptionHandler;
@@ -13,19 +12,7 @@ internal class GlobalExceptionHandler : IExceptionHandler
     {
         ProblemDetails problem = exception switch
         {
-            UnauthorizedAccessException
-                => ProblemDetailsFactory.UnauthorizedAccessProblem(httpContext, exception),
-
-            ForbiddenAccessException or PasswordChangeRequiredException
-                => ProblemDetailsFactory.ForbiddenAccessProblem(httpContext, exception),
-
-            NotFoundException
-                => ProblemDetailsFactory.NotFoundProblem(httpContext, exception),
-
-            ValidationException validationException
-                => ProblemDetailsFactory.ValidationProblem(httpContext, validationException),
-
-            _ => ProblemDetailsFactory.InternalServerProblem(httpContext)
+            _ => ProblemFactory.InternalServer()
         };
 
         httpContext.Response.StatusCode = problem.Status.GetValueOrDefault();

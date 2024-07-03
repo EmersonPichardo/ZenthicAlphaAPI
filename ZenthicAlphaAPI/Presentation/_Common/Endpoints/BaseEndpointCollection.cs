@@ -3,6 +3,7 @@ using Application._Common.Pagination;
 using Application._Common.Queries;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using Presentation._Common.ExceptionHandler;
 using System.Collections.ObjectModel;
 
 namespace Presentation._Common.Endpoints;
@@ -37,9 +38,9 @@ public abstract class BaseEndpointCollection(
                 .AllowAnonymous()
                 .WithTags($"{CollectionName}EndpointCollection")
                 .Produces(endpoint.SuccessStatusCode, endpoint.SuccessType)
-                .Produces(401)
-                .Produces(403)
-                .Produces(500);
+                .Produces(401, typeof(ProblemDetails))
+                .Produces(403, typeof(ProblemDetails))
+                .Produces(500, typeof(ProblemDetails));
         }
     }
 
@@ -108,33 +109,76 @@ public abstract class BaseEndpointCollection(
         static async Task<IResult> Get(ISender mediator, Guid id)
         {
             var query = new TQuery() { Id = id };
-            var response = await mediator.Send(query);
+            var result = await mediator.Send(query);
 
-            return Results.Ok(response);
+            return result.Match(
+                ResultFactory.Ok,
+                ResultFactory.ProblemDetails
+            );
         }
     }
     protected void DefineInsertEndpoint<TCommand>()
-        where TCommand : IBaseCommand
+        where TCommand : ICommand
     {
         DefineEndpoint(HttpVerbose.Post, "/",
             Insert, 201);
 
         static async Task<IResult> Insert(ISender mediator, TCommand command)
         {
-            await mediator.Send(command);
-            return Results.StatusCode(201);
+            var result = await mediator.Send(command);
+
+            return result.Match(
+                ResultFactory.Created,
+                ResultFactory.ProblemDetails
+            );
+        }
+    }
+    protected void DefineInsertEndpoint<TCommand, TResponse>()
+        where TCommand : ICommand<TResponse>
+    {
+        DefineEndpoint(HttpVerbose.Post, "/",
+            Insert, 201);
+
+        static async Task<IResult> Insert(ISender mediator, TCommand command)
+        {
+            var result = await mediator.Send(command);
+
+            return result.Match(
+                ResultFactory.Created,
+                ResultFactory.ProblemDetails
+            );
         }
     }
     protected void DefineUpdateEndpoint<TCommand>()
-        where TCommand : IBaseCommand
+        where TCommand : ICommand
     {
         DefineEndpoint(HttpVerbose.Put, "/",
             Update, 200);
 
         static async Task<IResult> Update(ISender mediator, TCommand command)
         {
-            await mediator.Send(command);
-            return Results.Ok();
+            var result = await mediator.Send(command);
+
+            return result.Match(
+                ResultFactory.Ok,
+                ResultFactory.ProblemDetails
+            );
+        }
+    }
+    protected void DefineUpdateEndpoint<TCommand, TResponse>()
+        where TCommand : ICommand<TResponse>
+    {
+        DefineEndpoint(HttpVerbose.Put, "/",
+            Update, 200);
+
+        static async Task<IResult> Update(ISender mediator, TCommand command)
+        {
+            var result = await mediator.Send(command);
+
+            return result.Match(
+                ResultFactory.Ok,
+                ResultFactory.ProblemDetails
+            );
         }
     }
     protected void DefineDeleteEndpoint<TCommand>()
@@ -146,9 +190,12 @@ public abstract class BaseEndpointCollection(
         static async Task<IResult> Delete(ISender mediator, Guid id)
         {
             var command = new TCommand() { Id = id };
-            await mediator.Send(command);
+            var result = await mediator.Send(command);
 
-            return Results.Ok();
+            return result.Match(
+                ResultFactory.Ok,
+                ResultFactory.ProblemDetails
+            );
         }
     }
 }

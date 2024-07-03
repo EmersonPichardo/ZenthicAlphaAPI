@@ -1,9 +1,12 @@
-﻿using MediatR;
+﻿using Application._Common.Failures;
+using MediatR;
+using OneOf;
+using OneOf.Types;
 
 namespace Application._Common.Commands;
 
 public interface ICommand
-    : IBaseCommand, IRequest;
+    : IBaseCommand, IRequest<OneOf<None, Failure>>;
 
-public interface ICommand<out TResponse>
-    : IBaseCommand, IRequest<TResponse>;
+public interface ICommand<TResponse>
+    : IBaseCommand, IRequest<OneOf<TResponse, Failure>>;

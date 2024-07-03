@@ -1,6 +1,10 @@
-﻿namespace Application._Common.Security.Authentication;
+﻿using Application._Common.Failures;
+using OneOf;
+using OneOf.Types;
+
+namespace Application._Common.Security.Authentication;
 
 public interface ICurrentUserService
 {
-    Task<ICurrentUser?> GetCurrentUserAsync();
+    Task<OneOf<ICurrentUser, None, Failure>> GetCurrentUserAsync();
 }

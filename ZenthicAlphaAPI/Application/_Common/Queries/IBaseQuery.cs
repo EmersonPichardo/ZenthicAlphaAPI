@@ -1,3 +1,5 @@
-﻿namespace Application._Common.Queries;
+﻿using MediatR;
 
-public interface IBaseQuery;
+namespace Application._Common.Queries;
+
+public interface IBaseQuery : IBaseRequest;

@@ -1,9 +1,7 @@
-﻿using Application._Common.Commands;
-using Application._Common.Queries;
-using Application._Common.Security.Authentication;
-using MediatR;
+﻿using Application._Common.Security.Authentication;
 using MediatR.Pipeline;
 using Microsoft.Extensions.Logging;
+using OneOf;
 using System.Text.Json;
 
 namespace Infrastructure._Common.Behaviors;
@@ -13,17 +11,20 @@ internal class LoggingBehavior<TRequest>(
     IIdentityService identityService
 )
     : IRequestPreProcessor<TRequest>
-    where TRequest : IBaseRequest
+    where TRequest : notnull
 {
     public async Task Process(
         TRequest request,
         CancellationToken cancellationToken)
     {
-        var currentUserId = identityService
-            .GetCurrentUserIdentity()?
-            .Id
-            .ToString()
-        ?? "[Anonymous]";
+        var currentUserIdentityResult = identityService
+            .GetCurrentUserIdentity();
+
+        var currentUserId = currentUserIdentityResult.Match(
+            currentUserIdentity => currentUserIdentity.Id.ToString(),
+            none => "[Anonymous]",
+            failure => "[Invalid user]"
+        );
 
         logger?.LogInformation("Processing request: {@RequestName} {@RequestBody} {@RequestedBy}",
             typeof(TRequest).Name,
@@ -40,25 +41,24 @@ internal class LoggingBehavior<TRequest, TResponse>(
     IIdentityService identityService
 )
     : IRequestPostProcessor<TRequest, TResponse>
-    where TRequest : IBaseRequest
+    where TRequest : notnull
+    where TResponse : IOneOf
 {
     public async Task Process(
         TRequest request,
         TResponse response,
         CancellationToken cancellationToken)
     {
-        var currentUserId = identityService
-            .GetCurrentUserIdentity()?
-            .Id
-            .ToString()
-        ?? "[Anonymous]";
+        var currentUserIdentityResult = identityService
+            .GetCurrentUserIdentity();
 
-        var responseBody = request switch
-        {
-            IBaseQuery => "[Redacted]",
-            IBaseCommand => JsonSerializer.Serialize(response),
-            _ => throw new InvalidOperationException($"Unknown request type {{{request.GetType()}}}")
-        };
+        var currentUserId = currentUserIdentityResult.Match(
+            currentUserIdentity => currentUserIdentity.Id.ToString(),
+            none => "[Anonymous]",
+            failure => "[Invalid user]"
+        );
+
+        var responseBody = JsonSerializer.Serialize(response.Value);
 
         logger?.LogInformation("Request processed: {@RequestName} {@RequestBody} {@ResponseBody} {@RequestedBy}",
             typeof(TRequest).Name,

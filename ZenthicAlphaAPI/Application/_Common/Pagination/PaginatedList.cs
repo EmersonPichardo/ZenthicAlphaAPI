@@ -4,7 +4,6 @@ using System.Linq.Expressions;
 namespace Application._Common.Pagination;
 
 public class PaginatedList<T>
-    where T : class
 {
     public required IReadOnlyCollection<T> Items { get; init; } = new List<T>();
     public required int CurrentPage { get; init; }
@@ -28,7 +27,7 @@ public class PaginatedList<T>
         if (currentPageValue < 1)
             return new PaginatedList<T>()
             {
-                Items = new List<T>(),
+                Items = [],
                 TotalCount = 0,
                 PageSize = pageSizeValue,
                 CurrentPage = currentPageValue

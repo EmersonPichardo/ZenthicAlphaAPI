@@ -1,11 +1,13 @@
 ﻿using Application._Common.Events;
-using Application._Common.Exceptions;
+using Application._Common.Failures;
 using Application._Common.Helpers;
 using Application._Common.Persistence.Databases;
 using Application.Roles.Update;
 using Domain._Common.Modularity;
 using Domain.Security;
 using Microsoft.EntityFrameworkCore;
+using OneOf;
+using OneOf.Types;
 using System.Collections;
 
 namespace Infrastructure.Roles.Update;
@@ -16,12 +18,14 @@ internal class UpdateRoleCommandHandler(
 )
     : IUpdateRoleCommandHandler
 {
-    public async Task Handle(UpdateRoleCommand command, CancellationToken cancellationToken)
+    public async Task<OneOf<None, Failure>> Handle(UpdateRoleCommand command, CancellationToken cancellationToken)
     {
         var foundRole = await dbContext
             .Roles
-            .FindAsync([command.Id], cancellationToken)
-        ?? throw new NotFoundException(nameof(dbContext.Roles), command.Id);
+            .FindAsync([command.Id], cancellationToken);
+
+        if (foundRole is null)
+            return FailureFactory.NotFound("Role not found", $"No role was found with an Id of {command.Id}");
 
         foundRole.Name = command.Name;
 
@@ -47,5 +51,7 @@ internal class UpdateRoleCommandHandler(
         eventPublisher.EnqueueEvent(
             new RoleUpdatedEvent() { Entity = foundRole }
         );
+
+        return new None();
     }
 }

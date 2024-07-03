@@ -3,7 +3,6 @@
 public record GetEntitiesPaginatedQuery<TResponse>
     : IGetEntitiesPaginatedQuery
     , IQuery<PaginatedList<TResponse>>
-    where TResponse : class
 {
     public string? Search { get => search; init => search = value?.ToNormalize(); }
     private string? search;
