@@ -2,6 +2,7 @@
 using Application._Common.Commands;
 using Application._Common.Queries;
 using MediatR;
+using OneOf;
 using System.Reflection;
 using System.Text.Json;
 
@@ -12,7 +13,7 @@ internal class CachingBehavior<TRequest, TResponse>(
 )
     : IPipelineBehavior<TRequest, TResponse>
     where TRequest : notnull
-    where TResponse : new()
+    where TResponse : IOneOf
 {
     public async Task<TResponse> Handle(
         TRequest request,
@@ -45,14 +46,16 @@ internal class CachingBehavior<TRequest, TResponse>(
         CancellationToken cancellationToken)
     {
         var key = $"{request.GetType().Name} {JsonSerializer.Serialize(request)}";
-        var cachedResponse = await cacheStore.GetAsync<TResponse>(key, cancellationToken);
+        var responseType = typeof(TResponse).GenericTypeArguments[0];
+        var cachedResponse = await cacheStore.GetAsync(key, responseType, cancellationToken);
 
         if (cachedResponse is not null)
-            return cachedResponse;
+            return (dynamic)cachedResponse;
 
         var response = await next().ConfigureAwait(false);
 
-        await cacheStore.SetAsync(tag, key, await next(), cancellationToken);
+        if (response.Index == 0)
+            await cacheStore.SetAsync(tag, key, response.Value, cancellationToken);
 
         return response;
     }

@@ -10,7 +10,9 @@ internal static class MappingExtensions
         Expression<Func<TDestination, bool>> filterPredicate,
         int? currentPage,
         int? pageSize,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
+        where TDestination : class
     {
         return PaginatedList<TDestination>.CreateAsync(
             queryable,

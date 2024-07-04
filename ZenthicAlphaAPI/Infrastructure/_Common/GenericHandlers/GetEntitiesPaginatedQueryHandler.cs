@@ -1,10 +1,12 @@
-﻿using Application._Common.Pagination;
+﻿using Application._Common.Failures;
+using Application._Common.Pagination;
 using Application._Common.Persistence.Databases;
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
 using Domain._Common.Entities.Abstractions;
 using Infrastructure._Common.Mapping;
 using Microsoft.EntityFrameworkCore;
+using OneOf;
 using System.Linq.Expressions;
 
 namespace Infrastructure._Common.GenericHandlers;
@@ -15,9 +17,10 @@ internal abstract class GetEntitiesPaginatedQueryHandler<TQuery, TResponse, TEnt
     Func<string?, Expression<Func<TResponse, bool>>> getFilterExpression
 )
     where TQuery : GetEntitiesPaginatedQuery<TResponse>
+    where TResponse : class
     where TEntity : class, ICompoundEntity
 {
-    public async Task<PaginatedList<TResponse>> Handle(
+    public async Task<OneOf<PaginatedList<TResponse>, Failure>> Handle(
         TQuery query,
         CancellationToken cancellationToken)
     {

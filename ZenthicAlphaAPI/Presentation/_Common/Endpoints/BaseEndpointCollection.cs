@@ -79,9 +79,12 @@ public abstract class BaseEndpointCollection(
                 PageSize = size
             };
 
-            var response = await mediator.Send(query);
+            var result = await mediator.Send(query);
 
-            return Results.Ok(response);
+            return result.Match(
+                ResultFactory.Ok,
+                ResultFactory.ProblemDetails
+            );
         }
     }
     protected void DefineGetAllEndpoint<TQuery, TResponse>()
@@ -94,9 +97,12 @@ public abstract class BaseEndpointCollection(
         static async Task<IResult> GetAll(ISender mediator)
         {
             var query = new TQuery();
-            var response = await mediator.Send(query);
+            var result = await mediator.Send(query);
 
-            return Results.Ok(response);
+            return result.Match(
+                ResultFactory.Ok,
+                ResultFactory.ProblemDetails
+            );
         }
     }
     protected void DefineGetEndpoint<TQuery, TResponse>(string? route = null)

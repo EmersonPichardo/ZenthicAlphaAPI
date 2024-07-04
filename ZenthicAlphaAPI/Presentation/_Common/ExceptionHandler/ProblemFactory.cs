@@ -53,7 +53,8 @@ internal static class ProblemFactory
     internal static ProblemDetails InternalServer() => new()
     {
         Status = StatusCodes.Status500InternalServerError,
-        Title = "An internal unexpected error happened",
+        Title = "Un error inesperado ha ocurrido",
+        Detail = "Por favor intente en otro momento",
         Type = "https://datatracker.ietf.org/doc/html/rfc7231#section-6.6.1"
     };
 }

@@ -23,7 +23,7 @@ internal class CacheStore : ICacheStore
         jsonSerializerOptions = new()
         {
             PropertyNameCaseInsensitive = true,
-            ReferenceHandler = ReferenceHandler.Preserve
+            ReferenceHandler = ReferenceHandler.IgnoreCycles
         };
 
         var cacheSettings = cacheSettingsOptions.Value;
@@ -51,7 +51,7 @@ internal class CacheStore : ICacheStore
         cachedCompoundKeys.TryAdd(key, tag);
     }
 
-    public async Task<T?> GetAsync<T>(string key, CancellationToken cancellationToken = default)
+    public async Task<object?> GetAsync(string key, Type returnType, CancellationToken cancellationToken = default)
     {
         var deserializedValue = await distributedCache.GetStringAsync(
             key,
@@ -61,10 +61,16 @@ internal class CacheStore : ICacheStore
         if (string.IsNullOrWhiteSpace(deserializedValue))
             return default;
 
-        return JsonSerializer.Deserialize<T>(
+        return JsonSerializer.Deserialize(
             deserializedValue,
+            returnType,
             jsonSerializerOptions
         );
+    }
+
+    public async Task<T?> GetAsync<T>(string key, CancellationToken cancellationToken = default)
+    {
+        return (T?)await GetAsync(key, typeof(T), cancellationToken);
     }
 
     public async Task ClearAsync(string key, CancellationToken cancellationToken = default)

@@ -4,6 +4,7 @@ using System.Linq.Expressions;
 namespace Application._Common.Pagination;
 
 public class PaginatedList<T>
+    where T : class
 {
     public required IReadOnlyCollection<T> Items { get; init; } = new List<T>();
     public required int CurrentPage { get; init; }

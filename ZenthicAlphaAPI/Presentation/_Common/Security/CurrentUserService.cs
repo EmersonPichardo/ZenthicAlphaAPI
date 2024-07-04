@@ -34,8 +34,10 @@ internal record CurrentUserService(
             .RequestAborted
         ?? CancellationToken.None;
 
+        var currentUserCacheKey = $"{nameof(ICurrentUserIdentity)}{{{currentUserId}}}";
+
         var cachedCurrentUser = await cacheStore.GetAsync<CurrentUser>(
-            $"{nameof(ICurrentUserIdentity)}{{{currentUserId}}}",
+            currentUserCacheKey,
             cancellationToken
         );
 
@@ -80,7 +82,7 @@ internal record CurrentUserService(
 
         await cacheStore.SetAsync(
             nameof(ICurrentUserIdentity),
-            $"{nameof(ICurrentUserIdentity)}{{{currentUserId}}}",
+            currentUserCacheKey,
             currentUser,
             cancellationToken
         );

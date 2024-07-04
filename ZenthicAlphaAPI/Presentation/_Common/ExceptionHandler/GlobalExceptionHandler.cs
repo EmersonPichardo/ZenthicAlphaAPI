@@ -10,10 +10,7 @@ internal class GlobalExceptionHandler : IExceptionHandler
         Exception exception,
         CancellationToken cancellationToken)
     {
-        ProblemDetails problem = exception switch
-        {
-            _ => ProblemFactory.InternalServer()
-        };
+        ProblemDetails problem = ProblemFactory.InternalServer();
 
         httpContext.Response.StatusCode = problem.Status.GetValueOrDefault();
         await httpContext.Response.WriteAsJsonAsync(problem, cancellationToken);

@@ -1,14 +1,14 @@
 services:
-  template.api:
+  zenthicAlpha.api:
     image: ${DOCKER_REGISTRY-}presentation
-    container_name: template.api
+    container_name: zenthicAlpha.api
     build:
       context: .
       dockerfile: Presentation/Dockerfile
 
-  template.database:
+  zenthicAlpha.database:
     image: mcr.microsoft.com/mssql/server
-    container_name: template.database
+    container_name: zenthicAlpha.database
     ports:
       - 1433:1433
     environment:
@@ -18,16 +18,16 @@ services:
     volumes:
       - ./Database:/var/opt/mssql/data
 
-  template.cache:
+  zenthicAlpha.cache:
     image: redis
-    container_name: template.cache
+    container_name: zenthicAlpha.cache
     ports:
       - 6379:6379
     restart: always
 
-  template.smtp:
+  zenthicAlpha.smtp:
     image: mailhog/mailhog
-    container_name: template.smtp
+    container_name: zenthicAlpha.smtp
     ports:
       - 8025:8025
       - 1025:1025
