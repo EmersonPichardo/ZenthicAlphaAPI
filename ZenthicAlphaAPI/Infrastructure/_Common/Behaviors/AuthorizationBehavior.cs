@@ -1,4 +1,5 @@
 ﻿using Application._Common.Failures;
+using Application._Common.Helpers;
 using Application._Common.Security.Authentication;
 using Application._Common.Security.Authorization;
 using Application.Users.ChangePassword;
@@ -27,15 +28,15 @@ internal class AuthorizationBehavior<TRequest, TResponse>(
 
         var validCurrentUserResult = await GetValidCurrentUserAsync(request);
 
-        if (validCurrentUserResult.IsT1)
-            return (dynamic)validCurrentUserResult.AsT1;
+        if (validCurrentUserResult.IsFailure())
+            return validCurrentUserResult.GetValueAs<dynamic>();
 
-        var currentUser = validCurrentUserResult.AsT0;
+        var currentUser = validCurrentUserResult.GetValueAs<ICurrentUser>();
 
         var validateAccessLevelResult = ValidateAccessLevel(currentUser, request);
 
-        if (validateAccessLevelResult.IsT1)
-            return (dynamic)validateAccessLevelResult.AsT1;
+        if (validateAccessLevelResult.IsFailure())
+            return validateAccessLevelResult.GetValueAs<dynamic>();
 
         return await next().ConfigureAwait(false);
     }

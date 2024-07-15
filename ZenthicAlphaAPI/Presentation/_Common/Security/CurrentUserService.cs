@@ -1,5 +1,6 @@
 ﻿using Application._Common.Caching;
 using Application._Common.Failures;
+using Application._Common.Helpers;
 using Application._Common.Persistence.Databases;
 using Application._Common.Security.Authentication;
 using Microsoft.EntityFrameworkCore;
@@ -8,7 +9,7 @@ using OneOf.Types;
 
 namespace Presentation._Common.Security;
 
-internal record CurrentUserService(
+internal class CurrentUserService(
     ICacheStore cacheStore,
     IHttpContextAccessor httpContextAccessor,
     IIdentityService identityService,
@@ -21,13 +22,13 @@ internal record CurrentUserService(
         var currentUserIdentityResult = identityService
             .GetCurrentUserIdentity();
 
-        if (currentUserIdentityResult.IsT1)
+        if (currentUserIdentityResult.IsNull())
             return new None();
 
-        if (currentUserIdentityResult.IsT2)
-            return currentUserIdentityResult.AsT2;
+        if (currentUserIdentityResult.IsFailure())
+            return currentUserIdentityResult.GetValueAsFailure();
 
-        var currentUserId = currentUserIdentityResult.AsT0.Id;
+        var currentUserId = currentUserIdentityResult.GetValueAs<ICurrentUser>().Id;
 
         var cancellationToken = httpContextAccessor
             .HttpContext?

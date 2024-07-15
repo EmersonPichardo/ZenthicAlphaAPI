@@ -1,4 +1,5 @@
 ﻿using Application._Common.Failures;
+using Application._Common.Helpers;
 using Application._Common.Persistence.Databases;
 using Application._Common.Security.Authentication;
 using Application._Common.Settings;
@@ -25,13 +26,13 @@ internal class ChangeUserPasswordCommandHandler(
         var currentUserIdentityResult = identityService
             .GetCurrentUserIdentity();
 
-        if (currentUserIdentityResult.IsT1)
+        if (currentUserIdentityResult.IsNull())
             return new None();
 
-        if (currentUserIdentityResult.IsT2)
-            return currentUserIdentityResult.AsT2;
+        if (currentUserIdentityResult.IsFailure())
+            return currentUserIdentityResult.GetValueAsFailure();
 
-        var currentUserId = currentUserIdentityResult.AsT0.Id;
+        var currentUserId = currentUserIdentityResult.GetValueAs<ICurrentUserIdentity>().Id;
 
         var foundUser = await dbContext
             .Users

@@ -1,4 +1,5 @@
 ﻿using Application._Common.Persistence.Databases;
+using Infrastructure._Common.Result;
 using MediatR;
 using OneOf;
 
@@ -25,10 +26,10 @@ internal class TransactionBehavior<TRequest, TResponse>(
         {
             var result = await next().ConfigureAwait(false);
 
-            if (result.Index == 0)
+            if (result.Index == (int)ResultType.Success)
                 await transaction.CommitAsync(cancellationToken);
 
-            if (result.Index == 1)
+            if (result.Index == (int)ResultType.Failure)
                 await transaction.RollbackAsync(cancellationToken);
 
             return result;

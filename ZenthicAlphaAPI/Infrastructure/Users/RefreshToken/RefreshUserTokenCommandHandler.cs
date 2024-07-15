@@ -1,4 +1,5 @@
 ﻿using Application._Common.Failures;
+using Application._Common.Helpers;
 using Application._Common.Persistence.Databases;
 using Application._Common.Security.Authentication;
 using Application.Users.ClearSession;
@@ -26,11 +27,11 @@ internal class RefreshUserTokenCommandHandler(
         var currentUserIdentityResult = identityService
             .GetCurrentUserIdentity();
 
-        if (currentUserIdentityResult.IsT1)
+        if (currentUserIdentityResult.IsNull())
             return FailureFactory.UnauthorizedAccess();
 
-        if (currentUserIdentityResult.IsT2)
-            return currentUserIdentityResult.AsT2;
+        if (currentUserIdentityResult.IsFailure())
+            return currentUserIdentityResult.GetValueAsFailure();
 
         var currentUserId = currentUserIdentityResult.AsT0.Id;
 

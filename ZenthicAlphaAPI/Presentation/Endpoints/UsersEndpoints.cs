@@ -34,10 +34,10 @@ public class UsersEndpoints : BaseEndpointCollection
         DefineEndpoint(HttpVerbose.Post, "/logout",
             Logout, 200);
 
-        DefineEndpoint(HttpVerbose.Patch, "/resetPassword",
+        DefineEndpoint(HttpVerbose.Patch, "/reset-password",
             ResetPassword, 200);
 
-        DefineEndpoint(HttpVerbose.Patch, "/changePassword",
+        DefineEndpoint(HttpVerbose.Patch, "/change-password",
             ChangePassword, 200);
     }
 
