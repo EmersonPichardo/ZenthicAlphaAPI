@@ -28,7 +28,7 @@ internal class CurrentUserService(
         if (currentUserIdentityResult.IsFailure())
             return currentUserIdentityResult.GetValueAsFailure();
 
-        var currentUserId = currentUserIdentityResult.GetValueAs<ICurrentUser>().Id;
+        var currentUserId = currentUserIdentityResult.GetValueAs<ICurrentUserIdentity>().Id;
 
         var cancellationToken = httpContextAccessor
             .HttpContext?

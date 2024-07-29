@@ -35,7 +35,7 @@ internal class ResetUserPasswordCommandHandler(
         foundUser.Salt = salt;
         foundUser.Algorithm = algorithm;
         foundUser.Iterations = iterations;
-        foundUser.Status = UserStatus.Active;
+        foundUser.Status = UserStatus.RequiredPasswordChange;
 
         dbContext.Users.Update(foundUser);
         await dbContext.SaveChangesAsync(cancellationToken);

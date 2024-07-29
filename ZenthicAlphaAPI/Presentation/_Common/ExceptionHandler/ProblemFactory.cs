@@ -11,7 +11,7 @@ internal static class ProblemFactory
         Title = failure.Title,
         Detail = failure.Detail,
         Type = "https://datatracker.ietf.org/doc/html/rfc7231#section-6.5.1",
-        Extensions = failure.Extensions
+        Extensions = { { "extensions", failure.Extensions } }
     };
 
     internal static ProblemDetails UnauthorizedAccess(UnauthorizedAccessFailure failure) => new()
@@ -20,7 +20,7 @@ internal static class ProblemFactory
         Title = failure.Title,
         Detail = failure.Detail,
         Type = "https://datatracker.ietf.org/doc/html/rfc7235#section-3.1",
-        Extensions = failure.Extensions
+        Extensions = { { "extensions", failure.Extensions } }
     };
 
     internal static ProblemDetails ForbiddenAccess(ForbiddenAccessFailure failure) => new()
@@ -29,7 +29,7 @@ internal static class ProblemFactory
         Title = failure.Title,
         Detail = failure.Detail,
         Type = "https://datatracker.ietf.org/doc/html/rfc7231#section-6.5.3",
-        Extensions = failure.Extensions
+        Extensions = { { "extensions", failure.Extensions } }
     };
 
     internal static ProblemDetails NotFound(NotFoundFailure failure) => new()
@@ -38,7 +38,7 @@ internal static class ProblemFactory
         Title = failure.Title,
         Detail = failure.Detail,
         Type = "https://datatracker.ietf.org/doc/html/rfc7231#section-6.5.4",
-        Extensions = failure.Extensions
+        Extensions = { { "extensions", failure.Extensions } }
     };
 
     internal static ProblemDetails InvalidRequest(InvalidRequestFailure failure) => new()
@@ -47,7 +47,7 @@ internal static class ProblemFactory
         Title = failure.Title,
         Detail = failure.Detail,
         Type = "https://datatracker.ietf.org/doc/html/rfc7231#section-6.5.1",
-        Extensions = failure.Extensions
+        Extensions = { { "extensions", failure.Extensions } }
     };
 
     internal static ProblemDetails InternalServer() => new()

@@ -3,8 +3,13 @@
     "Docker Compose": {
       "commandName": "DockerCompose",
       "commandVersion": "1.0",
+      "composeLaunchAction": "None",
+      "composeLaunchServiceName": "zenthicAlpha.api",
       "serviceActions": {
-        "presentation": "StartDebugging"
+        "zenthicAlpha.api": "StartDebugging",
+        "zenthicAlpha.cache": "StartWithoutDebugging",
+        "zenthicAlpha.database": "StartWithoutDebugging",
+        "zenthicAlpha.smtp": "StartWithoutDebugging"
       }
     }
   }
