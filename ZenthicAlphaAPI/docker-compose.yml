@@ -1,10 +1,10 @@
 services:
   zenthicAlpha.api:
-    image: ${DOCKER_REGISTRY-}presentation
+    image: ${DOCKER_REGISTRY-}app
     container_name: zenthicAlpha.api
     build:
       context: .
-      dockerfile: Presentation/Dockerfile
+      dockerfile: App/Dockerfile
 
   zenthicAlpha.database:
     image: mcr.microsoft.com/mssql/server
@@ -16,7 +16,7 @@ services:
       ACCEPT_EULA: "Y"
       MSSQL_PID: Developer
     volumes:
-      - ./Database:/var/opt/mssql/data
+      - ./orchestration/docker/mssql/data:/var/opt/mssql/data
 
   zenthicAlpha.cache:
     image: redis
