@@ -3,7 +3,7 @@
 # This stage is used when running from VS in fast mode (Default for Debug configuration)
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
 USER app
-WORKDIR /source/app
+WORKDIR /app
 EXPOSE 8080
 EXPOSE 8081
 
@@ -13,10 +13,9 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY ["source/App/App.csproj", "source/App/"]
-COPY ["source/core/Domain/Domain.csproj", "source/Domain/"]
-COPY ["source/core/Application/Application.csproj", "source/Application/"]
-COPY ["source/core/Infrastructure/Infrastructure.csproj", "source/Infrastructure/"]
-COPY ["source/core/Presentation/Presentation.csproj", "source/Presentation/"]
+COPY ["source/core/Domain/Domain.csproj", "source/core/Domain/"]
+COPY ["source/core/Application/Application.csproj", "source/core/Application/"]
+COPY ["source/core/Infrastructure/Infrastructure.csproj", "source/core/Infrastructure/"]
 COPY ["source/modules/identity/Identity.Domain/Identity.Domain.csproj", "source/modules/identity/Identity.Domain/"]
 COPY ["source/modules/identity/Identity.Application/Identity.Application.csproj", "source/modules/identity/Identity.Application/"]
 COPY ["source/modules/identity/Identity.Infrastructure/Identity.Infrastructure.csproj", "source/modules/identity/Identity.Infrastructure/"]

@@ -50,10 +50,10 @@ public static class ConfigureBuilder
     }
     private static IServiceCollection AddAutoMapperServices(this IServiceCollection services)
     {
-        services.AddAutoMapper(
-            typeof(IApplicationAssembly).Assembly,
-            Assembly.GetExecutingAssembly()
-            );
+        //services.AddAutoMapper(
+        //    typeof(IApplicationAssembly).Assembly,
+        //    Assembly.GetExecutingAssembly()
+        //    );
 
         return services;
     }

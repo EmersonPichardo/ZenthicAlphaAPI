@@ -4,7 +4,7 @@ services:
     container_name: zenthicAlpha.api
     build:
       context: .
-      dockerfile: App/Dockerfile
+      dockerfile: source/App/Dockerfile
     depends_on:
       - zenthicAlpha.database
       - zenthicAlpha.cache
