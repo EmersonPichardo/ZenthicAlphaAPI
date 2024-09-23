@@ -16,7 +16,7 @@ internal class AddRoleCommandHandler(
     IIdentityDbContext dbContext,
     IEventPublisher eventPublisher
 )
-    : IAddRoleCommandHandler
+    : IRequestHandler<AddRoleCommand, OneOf<None, Failure>>
 {
     public async Task<OneOf<None, Failure>> Handle(AddRoleCommand command, CancellationToken cancellationToken)
     {

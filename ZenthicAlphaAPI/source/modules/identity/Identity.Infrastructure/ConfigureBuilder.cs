@@ -26,7 +26,6 @@ public partial class ConfigureBuilder : IInfrastructureInstaller
         AddDbContextServices(services, configuration);
         AddSecurityServices(services, configuration);
         AddSettingsServices(services, configuration);
-        AddAutoMapperServices(services);
         AddFluentValidationServices(services);
         AddHealthChecksServices(services);
         AddMediatorServices(services);
@@ -94,13 +93,6 @@ public partial class ConfigureBuilder : IInfrastructureInstaller
             .Bind(configuration.GetRequiredSection(nameof(JwtSettings)))
             .ValidateDataAnnotations()
             .ValidateOnStart();
-    }
-    private static void AddAutoMapperServices(IServiceCollection services)
-    {
-        services.AddAutoMapper(
-            Application.AssemblyReference.Assembly,
-            AssemblyReference.Assembly
-        );
     }
     private static void AddFluentValidationServices(IServiceCollection services)
     {

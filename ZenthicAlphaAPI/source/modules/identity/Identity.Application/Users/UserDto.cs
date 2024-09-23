@@ -1,9 +1,6 @@
-﻿using Application.Mapping;
-using Identity.Domain.User;
+﻿namespace Identity.Application.Users;
 
-namespace Identity.Application.Users;
-
-public record UserDto : IMapFrom<User>
+public record UserDto
 {
     public required Guid Id { get; init; }
     public required string FullName { get; init; }

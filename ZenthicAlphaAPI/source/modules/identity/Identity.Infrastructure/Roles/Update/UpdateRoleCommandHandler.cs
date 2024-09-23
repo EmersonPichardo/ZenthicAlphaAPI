@@ -17,7 +17,7 @@ internal class UpdateRoleCommandHandler(
     IIdentityDbContext dbContext,
     IEventPublisher eventPublisher
 )
-    : IUpdateRoleCommandHandler
+    : IRequestHandler<UpdateRoleCommand, OneOf<None, Failure>>
 {
     public async Task<OneOf<None, Failure>> Handle(UpdateRoleCommand command, CancellationToken cancellationToken)
     {

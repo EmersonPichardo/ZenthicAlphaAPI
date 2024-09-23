@@ -1,8 +1,6 @@
 ﻿using Application.Failures;
 using Application.Pagination;
 using Application.Persistence.Databases;
-using AutoMapper;
-using AutoMapper.QueryableExtensions;
 using Domain.Entities.Abstractions;
 using Infrastructure.Mapping;
 using Microsoft.EntityFrameworkCore;
@@ -13,13 +11,14 @@ namespace Infrastructure.GenericHandlers;
 
 public abstract class GetEntitiesPaginatedQueryHandler<TQuery, TResponse, TEntity>(
     IApplicationDbContext dbContext,
-    IMapper mapper,
     Func<string?, Expression<Func<TResponse, bool>>> getFilterExpression
 )
     where TQuery : GetEntitiesPaginatedQuery<TResponse>
     where TResponse : class
     where TEntity : class, ICompoundEntity
 {
+    protected abstract Expression<Func<TEntity, TResponse>> MapToResponse();
+
     public async Task<OneOf<PaginatedList<TResponse>, Failure>> Handle(
         TQuery query,
         CancellationToken cancellationToken)
@@ -30,7 +29,7 @@ public abstract class GetEntitiesPaginatedQueryHandler<TQuery, TResponse, TEntit
 
         return await entities
             .OrderBy(entity => entity.ClusterId)
-            .ProjectTo<TResponse>(mapper.ConfigurationProvider)
+            .ProjectTo(MapToResponse())
             .PaginatedListAsync(
                 getFilterExpression(query.Search),
                 query.CurrentPage,

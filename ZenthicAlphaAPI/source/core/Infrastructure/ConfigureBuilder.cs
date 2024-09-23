@@ -1,5 +1,4 @@
-﻿using Application;
-using Application.Caching;
+﻿using Application.Caching;
 using Application.Events;
 using Application.Exceptions;
 using Application.Notifications.Emails;
@@ -26,7 +25,6 @@ public static class ConfigureBuilder
 
         services
             .AddNotificationsServices()
-            .AddAutoMapperServices()
             .AddFluentValidationServices()
             .AddCacheServices(configuration)
             .AddHealthChecksServices(configuration)
@@ -45,15 +43,6 @@ public static class ConfigureBuilder
         services.Configure<HostOptions>(options =>
             options.BackgroundServiceExceptionBehavior = BackgroundServiceExceptionBehavior.Ignore
         );
-
-        return services;
-    }
-    private static IServiceCollection AddAutoMapperServices(this IServiceCollection services)
-    {
-        //services.AddAutoMapper(
-        //    typeof(IApplicationAssembly).Assembly,
-        //    Assembly.GetExecutingAssembly()
-        //    );
 
         return services;
     }
