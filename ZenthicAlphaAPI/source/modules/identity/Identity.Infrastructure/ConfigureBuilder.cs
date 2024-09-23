@@ -99,13 +99,13 @@ public partial class ConfigureBuilder : IInfrastructureInstaller
     {
         services.AddAutoMapper(
             Application.AssemblyReference.Assembly,
-            Assembly.GetExecutingAssembly()
+            AssemblyReference.Assembly
         );
     }
     private static void AddFluentValidationServices(IServiceCollection services)
     {
         services.AddValidatorsFromAssembly(
-            Assembly.GetExecutingAssembly(),
+            AssemblyReference.Assembly,
             includeInternalTypes: true
         );
     }
@@ -120,7 +120,7 @@ public partial class ConfigureBuilder : IInfrastructureInstaller
         services.AddMediatR(configuration =>
         {
             configuration
-                .RegisterServicesFromAssembly(Assembly.GetExecutingAssembly())
+                .RegisterServicesFromAssembly(AssemblyReference.Assembly)
                 .AddOpenBehavior(typeof(AuthorizationBehavior<,>))
                 .AddOpenBehavior(typeof(TransactionBehavior<,>));
         });

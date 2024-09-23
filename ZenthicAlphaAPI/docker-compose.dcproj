@@ -7,7 +7,7 @@
     <ProjectGuid>9df1cccc-b37d-4444-9e4c-09eb8d73038c</ProjectGuid>
     <DockerLaunchAction>LaunchBrowser</DockerLaunchAction>
     <DockerServiceUrl>{Scheme}://localhost:{ServicePort}/swagger</DockerServiceUrl>
-    <DockerServiceName>app</DockerServiceName>
+    <DockerServiceName>zenthicAlpha.api</DockerServiceName>
   </PropertyGroup>
   <ItemGroup>
     <None Include="docker-compose.override.yml">

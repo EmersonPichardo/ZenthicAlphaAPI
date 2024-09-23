@@ -16,6 +16,7 @@ internal class IdentityDbContext(
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder
+            .HasDefaultSchema("identity")
             .ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly())
             .MapToNormalizeMethod();
 

@@ -5,6 +5,9 @@ services:
     build:
       context: .
       dockerfile: App/Dockerfile
+    depends_on:
+      - zenthicAlpha.database
+      - zenthicAlpha.cache
 
   zenthicAlpha.database:
     image: mcr.microsoft.com/mssql/server
@@ -17,7 +20,7 @@ services:
       MSSQL_PID: Developer
     volumes:
       - ./orchestration/docker/mssql/data:/var/opt/mssql/data
-
+  
   zenthicAlpha.cache:
     image: redis
     container_name: zenthicAlpha.cache

@@ -23,6 +23,8 @@ internal class AuthorizationBehavior<TRequest, TResponse>(
         RequestHandlerDelegate<TResponse> next,
         CancellationToken cancellationToken)
     {
+        return await next().ConfigureAwait(false);
+
         if (IsAnonymousCall(request))
             return await next().ConfigureAwait(false);
 
