@@ -12,6 +12,10 @@ using MediatR.NotificationPublishers;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using OpenTelemetry.Exporter;
+using OpenTelemetry.Logs;
+using OpenTelemetry.Resources;
 using System.Reflection;
 
 namespace Infrastructure;
@@ -24,6 +28,7 @@ public static class ConfigureBuilder
         var configuration = builder.Configuration;
 
         services
+            .AddLoggerServices(builder)
             .AddNotificationsServices()
             .AddFluentValidationServices()
             .AddCacheServices(configuration)
@@ -32,7 +37,33 @@ public static class ConfigureBuilder
 
         return builder;
     }
+    private static IServiceCollection AddLoggerServices(this IServiceCollection services, IHostApplicationBuilder builder)
+    {
+        builder.Logging.ClearProviders();
 
+        services.AddLogging(loggingOptions => loggingOptions.AddOpenTelemetry(openTelemetryOptions => {
+            openTelemetryOptions.SetResourceBuilder(
+                ResourceBuilder.CreateEmpty()
+                .AddService(builder.Environment.ApplicationName)
+                .AddAttributes(new Dictionary<string, object>
+                {
+                    ["deployment.environment"] = builder.Environment.EnvironmentName
+                })
+            );
+
+            openTelemetryOptions.IncludeFormattedMessage = true;
+            openTelemetryOptions.IncludeScopes = true;
+
+            openTelemetryOptions.AddOtlpExporter(exporterOptions =>
+            {
+                exporterOptions.Endpoint = new("http://zenthicAlpha.logger/ingest/otlp/v1/logs");
+                exporterOptions.Protocol = OtlpExportProtocol.HttpProtobuf;
+                exporterOptions.Headers = "X-Seq-ApiKey=qXCj2RQpmTpFH3o6MdRd";
+            });
+        }));
+
+        return services;
+    }
     private static IServiceCollection AddNotificationsServices(this IServiceCollection services)
     {
         services

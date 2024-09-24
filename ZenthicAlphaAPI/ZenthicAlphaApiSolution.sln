@@ -33,7 +33,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Identity.Infrastructure", "
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Identity.Presentation", "source\modules\identity\Identity.Presentation\Identity.Presentation.csproj", "{CFE79052-9FFF-4468-ABD2-938B036C7FAF}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "App", "source\App\App.csproj", "{1DAFE112-21FA-4C36-BDF5-D48C31169461}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ZenthicAlpha", "source\App\ZenthicAlpha.csproj", "{1DAFE112-21FA-4C36-BDF5-D48C31169461}"
 EndProject
 Project("{E53339B2-1760-4266-BCC7-CA923CBCF16C}") = "docker-compose", "docker-compose.dcproj", "{9DF1CCCC-B37D-4444-9E4C-09EB8D73038C}"
 EndProject
