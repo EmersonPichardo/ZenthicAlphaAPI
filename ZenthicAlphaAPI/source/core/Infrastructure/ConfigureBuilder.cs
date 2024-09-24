@@ -28,7 +28,7 @@ public static class ConfigureBuilder
         var configuration = builder.Configuration;
 
         services
-            .AddLoggerServices(builder)
+            .AddLoggingServices(builder)
             .AddNotificationsServices()
             .AddFluentValidationServices()
             .AddCacheServices(configuration)
@@ -37,7 +37,7 @@ public static class ConfigureBuilder
 
         return builder;
     }
-    private static IServiceCollection AddLoggerServices(this IServiceCollection services, IHostApplicationBuilder builder)
+    private static IServiceCollection AddLoggingServices(this IServiceCollection services, IHostApplicationBuilder builder)
     {
         builder.Logging.ClearProviders();
 
