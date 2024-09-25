@@ -13,9 +13,13 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using OpenTelemetry;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
+using StackExchange.Redis;
+using System.Diagnostics;
 using System.Reflection;
 
 namespace Infrastructure;
@@ -28,7 +32,7 @@ public static class ConfigureBuilder
         var configuration = builder.Configuration;
 
         services
-            .AddLoggingServices(builder)
+            .AddOpenTelemetryServices(builder, configuration)
             .AddNotificationsServices()
             .AddFluentValidationServices()
             .AddCacheServices(configuration)
@@ -37,30 +41,59 @@ public static class ConfigureBuilder
 
         return builder;
     }
-    private static IServiceCollection AddLoggingServices(this IServiceCollection services, IHostApplicationBuilder builder)
+    private static IServiceCollection AddOpenTelemetryServices(this IServiceCollection services, IHostApplicationBuilder builder, IConfiguration configuration)
     {
         builder.Logging.ClearProviders();
 
-        services.AddLogging(loggingOptions => loggingOptions.AddOpenTelemetry(openTelemetryOptions => {
-            openTelemetryOptions.SetResourceBuilder(
-                ResourceBuilder.CreateEmpty()
-                .AddService(builder.Environment.ApplicationName)
-                .AddAttributes(new Dictionary<string, object>
-                {
-                    ["deployment.environment"] = builder.Environment.EnvironmentName
-                })
-            );
+        var applicationName = builder.Environment.ApplicationName;
+        var environmentName = builder.Environment.EnvironmentName;
 
-            openTelemetryOptions.IncludeFormattedMessage = true;
-            openTelemetryOptions.IncludeScopes = true;
+        var activitySourceName = $"{applicationName}.activitySource";
+        var activitySource = new ActivitySource(activitySourceName);
 
-            openTelemetryOptions.AddOtlpExporter(exporterOptions =>
+        var baseEndpoint = new Uri("http://zenthicAlpha.logger/ingest/otlp/v1/");
+        var protocol = OtlpExportProtocol.HttpProtobuf;
+        var securityHeader = "X-Seq-ApiKey=qXCj2RQpmTpFH3o6MdRd";
+
+        services
+            .AddOpenTelemetry()
+            .ConfigureResource(options => options
+                .AddService(applicationName)
+                .AddTelemetrySdk()
+                .AddEnvironmentVariableDetector()
+            )
+            .WithLogging(null, loggingOptions =>
             {
-                exporterOptions.Endpoint = new("http://zenthicAlpha.logger/ingest/otlp/v1/logs");
-                exporterOptions.Protocol = OtlpExportProtocol.HttpProtobuf;
-                exporterOptions.Headers = "X-Seq-ApiKey=qXCj2RQpmTpFH3o6MdRd";
+                loggingOptions.IncludeFormattedMessage = true;
+                loggingOptions.IncludeScopes = true;
+
+                loggingOptions.AddOtlpExporter(exporterOptions =>
+                {
+                    exporterOptions.Endpoint = new(baseEndpoint, "./logs");
+                    exporterOptions.Protocol = protocol;
+                    exporterOptions.Headers = securityHeader;
+                });
+            })
+            .WithTracing(tracingOptions =>
+            {
+                var cacheSettings = configuration
+                    .GetRequiredSection(nameof(CacheSettings))
+                    .Get<CacheSettings>()
+                ?? throw new NotFoundException($"Setting {nameof(CacheSettings)} was not found.");
+
+                tracingOptions.AddSource(activitySourceName);
+
+                tracingOptions.AddAspNetCoreInstrumentation();
+                tracingOptions.AddHttpClientInstrumentation();
+                tracingOptions.AddSqlClientInstrumentation();
+
+                tracingOptions.AddOtlpExporter(exporterOptions =>
+                {
+                    exporterOptions.Endpoint = new(baseEndpoint, "./traces");
+                    exporterOptions.Protocol = protocol;
+                    exporterOptions.Headers = securityHeader;
+                });
             });
-        }));
 
         return services;
     }
@@ -93,9 +126,12 @@ public static class ConfigureBuilder
             .Get<CacheSettings>()
         ?? throw new NotFoundException($"Setting {nameof(CacheSettings)} was not found.");
 
+        IConnectionMultiplexer redisConnectionMultiplexer = ConnectionMultiplexer.Connect(cacheSettings.ConnectionString);
+
         services
+            .AddSingleton(redisConnectionMultiplexer)
             .AddStackExchangeRedisCache(options =>
-                options.Configuration = cacheSettings.ConnectionString
+                options.ConnectionMultiplexerFactory = () => Task.FromResult(redisConnectionMultiplexer)
             )
             .AddSingleton<ICacheStore, CacheStore>();
 

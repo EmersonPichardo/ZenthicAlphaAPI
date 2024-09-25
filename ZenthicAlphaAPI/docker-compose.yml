@@ -1,6 +1,6 @@
 services:
   zenthicAlpha.api:
-    image: ${DOCKER_REGISTRY-}app
+    image: ${DOCKER_REGISTRY-}zenthic_alpha
     container_name: zenthicAlpha.api
     build:
       context: .
