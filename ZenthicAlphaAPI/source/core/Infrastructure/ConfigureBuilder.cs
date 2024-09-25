@@ -51,9 +51,14 @@ public static class ConfigureBuilder
         var activitySourceName = $"{applicationName}.activitySource";
         var activitySource = new ActivitySource(activitySourceName);
 
-        var baseEndpoint = new Uri("http://zenthicAlpha.logger/ingest/otlp/v1/");
-        var protocol = OtlpExportProtocol.HttpProtobuf;
-        var securityHeader = "X-Seq-ApiKey=qXCj2RQpmTpFH3o6MdRd";
+        var openTelemetrySettings = configuration
+            .GetRequiredSection(nameof(OpenTelemetrySettings))
+            .Get<OpenTelemetrySettings>()
+        ?? throw new NotFoundException($"Setting {nameof(OpenTelemetrySettings)} was not found.");
+
+        var baseEndpoint = new Uri(openTelemetrySettings.IngestBaseEndpoint);
+        var protocol = Enum.Parse<OtlpExportProtocol>(openTelemetrySettings.OtlpExportProtocol);
+        var securityHeader = $"X-Seq-ApiKey={openTelemetrySettings.ApiKey}";
 
         services
             .AddOpenTelemetry()
@@ -85,7 +90,11 @@ public static class ConfigureBuilder
 
                 tracingOptions.AddAspNetCoreInstrumentation();
                 tracingOptions.AddHttpClientInstrumentation();
-                tracingOptions.AddSqlClientInstrumentation();
+                tracingOptions.AddSqlClientInstrumentation(options =>
+                {
+                    options.SetDbStatementForText = true;
+                    options.EnableConnectionLevelAttributes = true;
+                });
 
                 tracingOptions.AddOtlpExporter(exporterOptions =>
                 {

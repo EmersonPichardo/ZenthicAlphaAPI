@@ -117,6 +117,11 @@ internal static partial class ConfigureBuilder
             .Bind(configuration.GetRequiredSection(nameof(PerformanceSettings)))
             .ValidateDataAnnotations()
             .ValidateOnStart();
+        services
+            .AddOptions<OpenTelemetrySettings>()
+            .Bind(configuration.GetRequiredSection(nameof(OpenTelemetrySettings)))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
 
         return services;
     }
