@@ -1,11 +1,10 @@
-﻿using Application.Failures;
+﻿using Application.Auth;
+using Application.Failures;
 using Application.Helpers;
-using Identity.Application._Common.Authentication;
-using Identity.Application._Common.Persistence.Databases;
-using Identity.Application._Common.Settings;
+using Domain.Identity;
 using Identity.Application.Users.ChangePassword;
-using Identity.Application.Users.ClearSession;
-using Identity.Domain.User;
+using Identity.Infrastructure.Common.Auth;
+using Identity.Infrastructure.Persistence.Databases.IdentityDbContext;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using OneOf;
@@ -14,67 +13,40 @@ using OneOf.Types;
 namespace Identity.Infrastructure.Users.ChangePassword;
 
 internal class ChangeUserPasswordCommandHandler(
-    IIdentityDbContext dbContext,
-    IPasswordHasher passwordHasher,
-    IIdentityService identityService,
-    ISender mediator
+    IdentityModuleDbContext dbContext,
+    PasswordManager passwordManager,
+    IUserSessionInfo userSessionInfo
 )
-    : IRequestHandler<ChangeUserPasswordCommand, OneOf<None, Failure>>
+    : IRequestHandler<ChangeUserPasswordCommand, OneOf<Success, Failure>>
 {
-    public async Task<OneOf<None, Failure>> Handle(ChangeUserPasswordCommand command, CancellationToken cancellationToken)
+    public async Task<OneOf<Success, Failure>> Handle(ChangeUserPasswordCommand command, CancellationToken cancellationToken)
     {
-        var currentUserIdentityResult = identityService
-            .GetCurrentUserIdentity();
-
-        if (currentUserIdentityResult.IsNull())
-            return new None();
-
-        if (currentUserIdentityResult.IsFailure())
-            return currentUserIdentityResult.GetValueAsFailure();
-
-        var currentUserId = currentUserIdentityResult.GetValueAs<ICurrentUserIdentity>().Id;
+        var authenticatedSession = (AuthenticatedSession)userSessionInfo.Session;
 
         var foundUser = await dbContext
             .Users
-            .FirstOrDefaultAsync(
-                entity
-                    => entity.Id.Equals(currentUserId),
+            .SingleOrDefaultAsync(
+                user => user.Id.Equals(authenticatedSession.Id),
                 cancellationToken
             );
 
-        if (foundUser is null)
+        var isInvalidUser = foundUser is null
+            || foundUser.Status.HasFlag(UserStatus.Inactive)
+            || !passwordManager.DoesPasswordsMatch(command.CurrentPassword, foundUser.HashedPassword, foundUser.HashingStamp);
+
+        if (foundUser is null || isInvalidUser)
             return FailureFactory.UnauthorizedAccess();
 
-        var hashingSettings = new HashingSettings()
-        {
-            Algorithm = foundUser.Algorithm,
-            Iterations = foundUser.Iterations
-        };
-        var hashedPassword = passwordHasher.Hash(
-            command.CurrentPassword, foundUser.Salt, hashingSettings
-        );
+        var passwordResult = passwordManager.Generate(command.NewPassword);
 
-        if (!hashedPassword.Equals(foundUser.Password, StringComparison.Ordinal))
-            return FailureFactory.UnauthorizedAccess("", "");
-
-        (var hashedNewPassword, var salt, var algorithm, var iterations)
-            = passwordHasher.Generate(command.NewPassword);
-
-        foundUser.Password = hashedNewPassword;
-        foundUser.Salt = salt;
-        foundUser.Algorithm = algorithm;
-        foundUser.Iterations = iterations;
-        foundUser.Status = UserStatus.Active;
+        foundUser.HashedPassword = passwordResult.HashedPassword;
+        foundUser.HashingStamp = passwordResult.HashingStamp;
+        foundUser.Status = foundUser.Status.RemoveFlag(UserStatus.PasswordChangeRequired);
 
         dbContext.Users.Update(foundUser);
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        await mediator.Send(
-            new ClearUserSessionCommand() { UserId = foundUser.Id },
-            cancellationToken
-        );
-
-        return new None();
+        return new Success();
     }
 }
 

@@ -7,19 +7,19 @@ namespace Application.Helpers;
 public static class IOneOfExtensions
 {
     public static bool IsSuccess(this IOneOf result)
-        => result.Value is not Failure;
+        => result.Value is Success or not Failure;
 
     public static bool IsFailure(this IOneOf result)
-        => result.Value is Failure;
+        => result.Value is Error or Failure;
 
     public static bool IsNull(this IOneOf result)
         => result.Value is None;
 
-    public static T GetValueAs<T>(this IOneOf result)
+    public static T GetValue<T>(this IOneOf result)
         => (T)result.Value;
 
-    public static Failure GetValueAsFailure(this IOneOf result)
+    public static Failure GetFailure(this IOneOf result)
         => result.IsFailure()
-            ? result.GetValueAs<Failure>()
+            ? result.GetValue<Failure>()
             : throw new InvalidOperationException($"Cannot return value as Failure as result is {result.GetType().Name}");
 }

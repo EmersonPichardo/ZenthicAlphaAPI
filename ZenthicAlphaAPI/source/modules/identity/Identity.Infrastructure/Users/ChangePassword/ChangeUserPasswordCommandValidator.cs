@@ -1,7 +1,7 @@
 ﻿using FluentValidation;
 using Identity.Application.Users.ChangePassword;
-using Identity.Infrastructure._Common.Security;
-using Identity.Infrastructure._Common.Validations.ValidationErrorMessages;
+using Identity.Infrastructure.Common.Auth;
+using Identity.Infrastructure.Common.Validations.ValidationErrorMessages;
 using Infrastructure.Validations.ValidationErrorMessages;
 
 namespace Identity.Infrastructure.Users.ChangePassword;

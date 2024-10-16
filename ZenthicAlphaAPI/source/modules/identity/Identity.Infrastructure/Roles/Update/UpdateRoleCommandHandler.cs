@@ -1,25 +1,23 @@
 ﻿using Application.Events;
 using Application.Failures;
 using Domain.Modularity;
-using Identity.Application._Common.Helpers;
-using Identity.Application._Common.Persistence.Databases;
 using Identity.Application.Roles.Update;
 using Identity.Domain.Roles;
+using Identity.Infrastructure.Persistence.Databases.IdentityDbContext;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using OneOf;
 using OneOf.Types;
-using System.Collections;
 
 namespace Identity.Infrastructure.Roles.Update;
 
 internal class UpdateRoleCommandHandler(
-    IIdentityDbContext dbContext,
+    IdentityModuleDbContext dbContext,
     IEventPublisher eventPublisher
 )
-    : IRequestHandler<UpdateRoleCommand, OneOf<None, Failure>>
+    : IRequestHandler<UpdateRoleCommand, OneOf<Success, Failure>>
 {
-    public async Task<OneOf<None, Failure>> Handle(UpdateRoleCommand command, CancellationToken cancellationToken)
+    public async Task<OneOf<Success, Failure>> Handle(UpdateRoleCommand command, CancellationToken cancellationToken)
     {
         var foundRole = await dbContext
             .Roles
@@ -35,24 +33,27 @@ internal class UpdateRoleCommandHandler(
             .Where(entity => entity.RoleId.Equals(command.Id))
             .ExecuteDeleteAsync(cancellationToken);
 
-        for (var index = 0; index < command.SelectedPermissions.GetLength(0); index++)
+        foreach ((var componentName, var permissionArray) in command.SelectedPermissions)
         {
-            var rolePermission = new RolePermission()
+            var permission = string.Join(',', permissionArray);
+
+            var rolePermission = new RolePermission
             {
-                Component = (Component)index,
-                RequiredAccess = new BitArray(command.SelectedPermissions[index]).ToInt()
+                RoleId = foundRole.Id,
+                Component = Enum.Parse<Component>(componentName, true),
+                RequiredAccess = Enum.Parse<Permission>(permission, true)
             };
 
-            foundRole.Permissions.Add(rolePermission);
+            dbContext.RolesPermissions.Add(rolePermission);
         }
 
-        dbContext.Roles.Update(foundRole);
+        dbContext.Update(foundRole);
         await dbContext.SaveChangesAsync(cancellationToken);
 
         eventPublisher.EnqueueEvent(
-            new RoleUpdatedEvent() { Entity = foundRole }
+            new RoleUpdatedEvent { Entity = foundRole }
         );
 
-        return new None();
+        return new Success();
     }
 }

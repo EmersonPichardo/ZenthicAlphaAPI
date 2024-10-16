@@ -1,4 +1,4 @@
-﻿using Application.Authorization;
+﻿using Application.Auth;
 using Application.Commands;
 using Domain.Modularity;
 

@@ -7,8 +7,8 @@ public interface IEndpoint
 {
     public Component Component { get; init; }
     public HttpVerbose Verbose { get; init; }
-    public string Route { get; init; }
+    public IReadOnlyCollection<string> Routes { get; init; }
     public HttpStatusCode SuccessStatusCode { get; init; }
-    public Type? SuccessType { get; init; }
+    public IReadOnlyCollection<Type> SuccessTypes { get; init; }
     public Delegate Handler { get; init; }
 }

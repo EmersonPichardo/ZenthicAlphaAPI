@@ -2,6 +2,7 @@
 using Identity.Application.Users.RefreshToken;
 using MediatR;
 using Presentation.Endpoints;
+using Presentation.Result;
 using System.Net;
 
 namespace Identity.Presentation.Users;
@@ -10,14 +11,14 @@ public record RefreshUserTokenEndpoint : IEndpoint
 {
     public Component Component { get; init; } = Component.Users;
     public HttpVerbose Verbose { get; init; } = HttpVerbose.Patch;
-    public string Route { get; init; } = "/token";
+    public IReadOnlyCollection<string> Routes { get; init; } = ["/token"];
     public HttpStatusCode SuccessStatusCode { get; init; } = HttpStatusCode.OK;
-    public Type? SuccessType { get; init; } = typeof(RefreshUserTokenCommandResponse);
+    public IReadOnlyCollection<Type> SuccessTypes { get; init; } = [typeof(RefreshUserTokenCommandResponse)];
     public Delegate Handler { get; init; } = async (
-        ISender mediator) =>
+        ISender mediator, CancellationToken cancellationToken) =>
     {
         var command = new RefreshUserTokenCommand();
-        var result = await mediator.Send(command);
+        var result = await mediator.Send(command, cancellationToken);
 
         return result.Match(
             ResultFactory.Ok,

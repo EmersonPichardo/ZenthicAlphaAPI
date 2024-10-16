@@ -1,36 +1,36 @@
 ﻿using Application.Events;
 using Application.Failures;
 using Domain.Modularity;
-using Identity.Application._Common.Helpers;
-using Identity.Application._Common.Persistence.Databases;
 using Identity.Application.Roles.Add;
 using Identity.Domain.Roles;
+using Identity.Infrastructure.Persistence.Databases.IdentityDbContext;
 using MediatR;
 using OneOf;
 using OneOf.Types;
-using System.Collections;
 
 namespace Identity.Infrastructure.Roles.Add;
 
 internal class AddRoleCommandHandler(
-    IIdentityDbContext dbContext,
+    IdentityModuleDbContext dbContext,
     IEventPublisher eventPublisher
 )
-    : IRequestHandler<AddRoleCommand, OneOf<None, Failure>>
+    : IRequestHandler<AddRoleCommand, OneOf<Success, Failure>>
 {
-    public async Task<OneOf<None, Failure>> Handle(AddRoleCommand command, CancellationToken cancellationToken)
+    public async Task<OneOf<Success, Failure>> Handle(AddRoleCommand command, CancellationToken cancellationToken)
     {
         var newRole = new Role
         {
             Name = command.Name
         };
 
-        for (var index = 0; index < command.SelectedPermissions.GetLength(0); index++)
+        foreach ((var componentName, var permissionArray) in command.SelectedPermissions)
         {
-            var rolePermission = new RolePermission()
+            var permission = string.Join(',', permissionArray);
+
+            var rolePermission = new RolePermission
             {
-                Component = (Component)index,
-                RequiredAccess = new BitArray(command.SelectedPermissions[index]).ToInt()
+                Component = Enum.Parse<Component>(componentName, true),
+                RequiredAccess = Enum.Parse<Permission>(permission, true)
             };
 
             newRole.Permissions.Add(rolePermission);
@@ -40,12 +40,9 @@ internal class AddRoleCommandHandler(
         await dbContext.SaveChangesAsync(cancellationToken);
 
         eventPublisher.EnqueueEvent(
-            new RoleAddedEvent()
-            {
-                Entity = newRole
-            }
+            new RoleAddedEvent { Entity = newRole }
         );
 
-        return new None();
+        return new Success();
     }
 }

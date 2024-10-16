@@ -1,5 +1,4 @@
 ﻿using Application.Notifications.Emails;
-using Application.Settings;
 using Microsoft.Extensions.Options;
 using System.Net;
 using System.Net.Mail;

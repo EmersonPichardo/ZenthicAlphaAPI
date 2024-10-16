@@ -1,6 +1,4 @@
-﻿using App.ExceptionHandler;
-using Application.Helpers;
-using Application.Settings;
+﻿using Application.Helpers;
 using HealthChecks.UI.Client;
 using Infrastructure.Modularity;
 using MicroElements.Swashbuckle.FluentValidation.AspNetCore;
@@ -9,23 +7,18 @@ using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Models;
 using Presentation.Endpoints;
 using Swashbuckle.AspNetCore.SwaggerGen;
+using ZenthicAlpha.ExceptionHandler;
 
-namespace App;
+namespace ZenthicAlpha;
 
 internal static partial class ConfigureBuilder
 {
-    public static IHostApplicationBuilder AddPresentation(this IHostApplicationBuilder builder)
+    public static WebApplicationBuilder AddPresentation(this WebApplicationBuilder builder)
     {
-        var services = builder.Services;
-        var configuration = builder.Configuration;
-
-        services
-            .AddExceptionHandler<GlobalExceptionHandler>()
-            .AddProblemDetails()
-            .AddHttpContextAccessor()
+        builder
+            .AddHttpServices()
             .AddCorsServices()
-            .AddOpenApiServices()
-            .AddSettingsServices(configuration);
+            .AddOpenApiServices();
 
         return builder;
     }
@@ -36,7 +29,7 @@ internal static partial class ConfigureBuilder
 
         app
             .UseApplicationCors()
-            .UseSecurity()
+            .UseAuth()
             .UseExceptionMiddleware()
             .UseSwaggerUserInterface()
             .UseHealthChecks()
@@ -45,9 +38,18 @@ internal static partial class ConfigureBuilder
         return app;
     }
 
-    private static IServiceCollection AddCorsServices(this IServiceCollection services)
+    private static WebApplicationBuilder AddHttpServices(this WebApplicationBuilder builder)
     {
-        services.AddCors(options => options
+        builder.Services
+            .AddExceptionHandler<GlobalExceptionHandler>()
+            .AddHttpContextAccessor()
+            .AddProblemDetails();
+
+        return builder;
+    }
+    private static WebApplicationBuilder AddCorsServices(this WebApplicationBuilder builder)
+    {
+        builder.Services.AddCors(options => options
             .AddDefaultPolicy(configure => configure
                 .AllowAnyOrigin()
                 .SetIsOriginAllowedToAllowWildcardSubdomains()
@@ -57,9 +59,9 @@ internal static partial class ConfigureBuilder
             )
         );
 
-        return services;
+        return builder;
     }
-    private static IServiceCollection AddOpenApiServices(this IServiceCollection services)
+    private static WebApplicationBuilder AddOpenApiServices(this WebApplicationBuilder builder)
     {
         static void ConfigureSwaggerGen(SwaggerGenOptions setupAction)
         {
@@ -88,42 +90,12 @@ internal static partial class ConfigureBuilder
             });
         }
 
-        services
+        builder.Services
             .AddEndpointsApiExplorer()
             .AddSwaggerGen(ConfigureSwaggerGen)
             .AddFluentValidationRulesToSwagger();
 
-        return services;
-    }
-    private static IServiceCollection AddSettingsServices(this IServiceCollection services, IConfiguration configuration)
-    {
-        services
-            .AddOptions<CacheSettings>()
-            .Bind(configuration.GetRequiredSection(nameof(CacheSettings)))
-            .ValidateDataAnnotations()
-            .ValidateOnStart();
-        services
-            .AddOptions<BackgroundTaskSettings>()
-            .Bind(configuration.GetRequiredSection(nameof(BackgroundTaskSettings)))
-            .ValidateDataAnnotations()
-            .ValidateOnStart();
-        services
-            .AddOptions<SmtpSettings>()
-            .Bind(configuration.GetRequiredSection(nameof(SmtpSettings)))
-            .ValidateDataAnnotations()
-            .ValidateOnStart();
-        services
-            .AddOptions<PerformanceSettings>()
-            .Bind(configuration.GetRequiredSection(nameof(PerformanceSettings)))
-            .ValidateDataAnnotations()
-            .ValidateOnStart();
-        services
-            .AddOptions<OpenTelemetrySettings>()
-            .Bind(configuration.GetRequiredSection(nameof(OpenTelemetrySettings)))
-            .ValidateDataAnnotations()
-            .ValidateOnStart();
-
-        return services;
+        return builder;
     }
 
     private static WebApplication UseApplicationCors(this WebApplication app)
@@ -137,12 +109,11 @@ internal static partial class ConfigureBuilder
 
         return app;
     }
-    private static WebApplication UseSecurity(this WebApplication app)
+    private static WebApplication UseAuth(this WebApplication app)
     {
         app
             .UseHttpsRedirection()
-            .UseAuthentication()
-            .UseAuthorization();
+            .UseAuthentication();
 
         return app;
     }
@@ -181,26 +152,32 @@ internal static partial class ConfigureBuilder
 
         foreach (var collection in endpointCollections)
         {
-            var group = app.MapGroup($"api/{collection.Component}");
+            var group = app.MapGroup($"api/{collection.Component.ToString().ToNormalize()}");
 
             foreach (var endpoint in collection.Endpoints)
             {
-                var endpointBuilder = endpoint.Verbose switch
+                var endpointBuilders = endpoint.Verbose switch
                 {
-                    HttpVerbose.Get => group.MapGet(endpoint.Route, endpoint.Handler),
-                    HttpVerbose.Post => group.MapPost(endpoint.Route, endpoint.Handler),
-                    HttpVerbose.Put => group.MapPut(endpoint.Route, endpoint.Handler),
-                    HttpVerbose.Patch => group.MapPatch(endpoint.Route, endpoint.Handler),
-                    HttpVerbose.Delete => group.MapDelete(endpoint.Route, endpoint.Handler),
+                    HttpVerbose.Get => endpoint.Routes.Select(route => group.MapGet(route, endpoint.Handler)),
+                    HttpVerbose.Post => endpoint.Routes.Select(route => group.MapPost(route, endpoint.Handler)),
+                    HttpVerbose.Put => endpoint.Routes.Select(route => group.MapPut(route, endpoint.Handler)),
+                    HttpVerbose.Patch => endpoint.Routes.Select(route => group.MapPatch(route, endpoint.Handler)),
+                    HttpVerbose.Delete => endpoint.Routes.Select(route => group.MapDelete(route, endpoint.Handler)),
                     _ => throw new NotImplementedException()
                 };
-                endpointBuilder
-                    .AllowAnonymous()
-                    .WithTags($"{collection.Component}Endpoints")
-                    .Produces((int)endpoint.SuccessStatusCode, endpoint.SuccessType)
-                    .Produces(401, typeof(ProblemDetails))
-                    .Produces(403, typeof(ProblemDetails))
-                    .Produces(500, typeof(ProblemDetails));
+
+                foreach (var endpointBuilder in endpointBuilders)
+                {
+                    endpointBuilder
+                        .AllowAnonymous()
+                        .WithTags($"{collection.Component}Endpoints")
+                        .Produces(401, typeof(ProblemDetails))
+                        .Produces(403, typeof(ProblemDetails))
+                        .Produces(500, typeof(ProblemDetails));
+
+                    foreach (var successType in endpoint.SuccessTypes)
+                        endpointBuilder.Produces((int)endpoint.SuccessStatusCode, successType);
+                }
             }
         }
 
@@ -210,41 +187,22 @@ internal static partial class ConfigureBuilder
 
 internal static partial class ConfigureBuilder
 {
-    public static IHostApplicationBuilder AddModules(this IHostApplicationBuilder builder)
-    {
-        var services = builder.Services;
-        var configuration = builder.Configuration;
+    private static readonly IReadOnlyList<IModuleInstaller> installers = [
+        new Identity.Infrastructure.Installer()
+    ];
 
-        services.AddModulesInfrastructure(configuration);
+    public static WebApplicationBuilder AddModules(this WebApplicationBuilder builder)
+    {
+        foreach (var installer in installers)
+            installer.AddInfrastructure(builder);
 
         return builder;
     }
-    public static IHost UseModules(this IHost host)
+    public static WebApplication UseModules(this WebApplication app)
     {
-        host.UseModulesInfrastructure();
+        foreach (var installer in installers)
+            installer.UseInfrastructure(app);
 
-        return host;
-    }
-
-    private static IServiceCollection AddModulesInfrastructure(this IServiceCollection services, IConfiguration configuration)
-    {
-        var currentAssembly = Identity.Infrastructure.AssemblyReference.Assembly;
-        var infrastructureInstallers = AbstractHelpers.CreateInstancesAssignableFromType<IInfrastructureInstaller>(currentAssembly);
-
-        foreach (var installer in infrastructureInstallers)
-            installer.AddInfrastructure(services, configuration);
-
-        return services;
-    }
-
-    private static IHost UseModulesInfrastructure(this IHost host)
-    {
-        var currentAssembly = Identity.Infrastructure.AssemblyReference.Assembly;
-        var infrastructureInstallers = AbstractHelpers.CreateInstancesAssignableFromType<IInfrastructureInstaller>(currentAssembly);
-
-        foreach (var installer in infrastructureInstallers)
-            installer.UseInfrastructure(host);
-
-        return host;
+        return app;
     }
 }

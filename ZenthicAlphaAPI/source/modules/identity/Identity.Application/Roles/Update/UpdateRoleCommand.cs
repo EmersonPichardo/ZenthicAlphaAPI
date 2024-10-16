@@ -1,11 +1,12 @@
-﻿using Application.Authorization;
+﻿using Application.Auth;
 using Application.Caching;
 using Domain.Modularity;
 using Identity.Application.Roles.Add;
 
 namespace Identity.Application.Roles.Update;
 
-[Authorize(Component.Roles, Permission.Update), Cache(Component.Roles)]
+[Cache(Component.Roles)]
+[Authorize(Component.Roles, Permission.Update)]
 public record UpdateRoleCommand
     : AddRoleCommand
 {

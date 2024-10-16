@@ -38,6 +38,6 @@ internal class ValidationBehavior<TRequest, TResponse>(
         if (isFailuresCountGot ? failuresCount > 0 : failures.Any())
             return (dynamic)FailureFactory.InvalidRequest("Invalid request", failures);
 
-        return await next().ConfigureAwait(false);
+        return await next();
     }
 }

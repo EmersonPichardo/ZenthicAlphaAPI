@@ -1,28 +1,34 @@
 ﻿using Application.Queries;
 using Domain.Modularity;
 using MediatR;
+using Microsoft.AspNetCore.Http;
+using Presentation.Result;
 using System.Net;
 
 namespace Presentation.Endpoints.Defaults;
 
 public abstract record DefaultGetAllEndpoint<TQuery, TResponse>(Component Component) : IEndpoint
     where TQuery : GetAllEntitiesQuery<TResponse>, new()
-    where TResponse : class
 {
     public Component Component { get; init; } = Component;
     public HttpVerbose Verbose { get; init; } = HttpVerbose.Get;
-    public string Route { get; init; } = "/";
+    public IReadOnlyCollection<string> Routes { get; init; } = ["/"];
     public HttpStatusCode SuccessStatusCode { get; init; } = HttpStatusCode.OK;
-    public Type? SuccessType { get; init; } = typeof(IEnumerable<TResponse>);
+    public IReadOnlyCollection<Type> SuccessTypes { get; init; } = [typeof(IEnumerable<TResponse>)];
     public Delegate Handler { get; init; } = async (
-        ISender mediator) =>
+        ISender mediator, CancellationToken cancellationToken) =>
+    {
+        return await GetAllQueryResultAsync(mediator, cancellationToken);
+    };
+
+    public static async Task<IResult> GetAllQueryResultAsync(ISender mediator, CancellationToken cancellationToken)
     {
         var query = new TQuery();
-        var result = await mediator.Send(query);
+        var result = await mediator.Send(query, cancellationToken);
 
         return result.Match(
             ResultFactory.Ok,
             ResultFactory.ProblemDetails
         );
-    };
+    }
 }

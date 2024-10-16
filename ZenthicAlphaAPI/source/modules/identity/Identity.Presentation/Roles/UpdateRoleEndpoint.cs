@@ -4,7 +4,4 @@ using Presentation.Endpoints.Defaults;
 
 namespace Identity.Presentation.Roles;
 
-public record UpdateRoleEndpoint : DefaultUpdateEndpoint<UpdateRoleCommand>
-{
-    public UpdateRoleEndpoint() : base(Component.Roles) { }
-}
+public record UpdateRoleEndpoint() : DefaultUpdateEndpoint<UpdateRoleCommand>(Component.Roles);

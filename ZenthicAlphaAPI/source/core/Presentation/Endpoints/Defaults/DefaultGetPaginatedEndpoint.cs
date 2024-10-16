@@ -1,35 +1,40 @@
 ﻿using Application.Pagination;
 using Domain.Modularity;
 using MediatR;
-using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Http;
+using Presentation.Result;
 using System.Net;
 
 namespace Presentation.Endpoints.Defaults;
 
 public abstract record DefaultGetPaginatedEndpoint<TQuery, TResponse>(Component Component) : IEndpoint
     where TQuery : GetEntitiesPaginatedQuery<TResponse>, new()
-    where TResponse : class
 {
     public Component Component { get; init; } = Component;
     public HttpVerbose Verbose { get; init; } = HttpVerbose.Get;
-    public string Route { get; init; } = "/paginated";
+    public IReadOnlyCollection<string> Routes { get; init; } = ["/"];
     public HttpStatusCode SuccessStatusCode { get; init; } = HttpStatusCode.OK;
-    public Type? SuccessType { get; init; } = typeof(PaginatedList<TResponse>);
+    public IReadOnlyCollection<Type> SuccessTypes { get; init; } = [typeof(PaginatedList<TResponse>)];
     public Delegate Handler { get; init; } = async (
-        ISender mediator, [FromQuery] int? page, [FromQuery] int? size, [FromQuery] string? search) =>
+        ISender mediator, int? page, int? pageSize, string? filter, CancellationToken cancellationToken) =>
     {
-        var query = new TQuery()
+        return await GetPaginatedResultAsync(mediator, page, pageSize, filter, cancellationToken);
+    };
+
+    public static async Task<IResult> GetPaginatedResultAsync(ISender mediator, int? page, int? pageSize, string? filter, CancellationToken cancellationToken)
+    {
+        var query = new TQuery
         {
-            Search = search,
+            Filter = filter,
             CurrentPage = page,
-            PageSize = size
+            PageSize = pageSize
         };
 
-        var result = await mediator.Send(query);
+        var result = await mediator.Send(query, cancellationToken);
 
         return result.Match(
             ResultFactory.Ok,
             ResultFactory.ProblemDetails
         );
-    };
+    }
 }

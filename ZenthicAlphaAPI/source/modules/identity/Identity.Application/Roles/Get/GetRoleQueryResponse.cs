@@ -1,9 +1,7 @@
-﻿using Identity.Application.Roles;
-
-namespace Identity.Application.Roles.Get;
+﻿namespace Identity.Application.Roles.Get;
 
 public record GetRoleQueryResponse
     : RoleDto
 {
-    public required bool[][] SelectedPermissions { get; init; }
+    public required IReadOnlyDictionary<string, string[]> SelectedPermissions { get; init; }
 }

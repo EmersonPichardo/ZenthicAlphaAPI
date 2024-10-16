@@ -6,10 +6,9 @@ namespace Application.Pagination;
 public record GetEntitiesPaginatedQuery<TResponse>
     : IGetEntitiesPaginatedQuery
     , IQuery<PaginatedList<TResponse>>
-where TResponse : class
 {
-    public string? Search { get => search; init => search = value?.ToNormalize(); }
-    private string? search;
+    public string? Filter { get => filter; init => filter = value?.ToNormalize(); }
+    private string? filter;
     public int? CurrentPage { get; init; }
     public int? PageSize { get; init; }
 }

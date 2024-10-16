@@ -1,9 +1,11 @@
 ﻿using Application.Events;
 using Application.Failures;
-using Identity.Application._Common.Authentication;
-using Identity.Application._Common.Persistence.Databases;
+using Domain.Identity;
+using Identity.Application.Users;
 using Identity.Application.Users.Add;
 using Identity.Domain.User;
+using Identity.Infrastructure.Common.Auth;
+using Identity.Infrastructure.Persistence.Databases.IdentityDbContext;
 using MediatR;
 using OneOf;
 using OneOf.Types;
@@ -11,29 +13,26 @@ using OneOf.Types;
 namespace Identity.Infrastructure.Users.Add;
 
 internal class AddUserCommandHandler(
-    IIdentityDbContext dbContext,
-    IPasswordHasher passwordHasher,
+    IdentityModuleDbContext dbContext,
+    PasswordManager passwordManager,
     IEventPublisher eventPublisher
 )
-    : IRequestHandler<AddUserCommand, OneOf<None, Failure>>
+    : IRequestHandler<AddUserCommand, OneOf<Success, Failure>>
 {
-    public async Task<OneOf<None, Failure>> Handle(AddUserCommand command, CancellationToken cancellationToken)
+    public async Task<OneOf<Success, Failure>> Handle(AddUserCommand command, CancellationToken cancellationToken)
     {
-        (var newPassword, var hashedPassword, var salt, var algorithm, var iterations)
-            = passwordHasher.GenerateNewPassword();
+        var newPasswordResult = passwordManager.Generate(command.Password);
 
-        var user = new User()
+        var user = new User
         {
-            FullName = command.FullName,
+            UserName = command.UserName,
             Email = command.Email,
-            Password = hashedPassword,
-            Salt = salt,
-            Algorithm = algorithm,
-            Iterations = iterations,
-            Status = UserStatus.RequiredPasswordChange,
+            HashedPassword = newPasswordResult.HashedPassword,
+            HashingStamp = newPasswordResult.HashingStamp,
+            Status = UserStatus.UnconfirmEmail,
             UserRoles = command
                 .RoleIds
-                .Select(roleId => new UserRole() { RoleId = roleId })
+                .Select(roleId => new UserRole { RoleId = roleId })
                 .ToList()
         };
 
@@ -41,15 +40,9 @@ internal class AddUserCommandHandler(
         await dbContext.SaveChangesAsync(cancellationToken);
 
         eventPublisher.EnqueueEvent(
-            new UserAddedEvent()
-            {
-                UserId = user.Id,
-                FullName = user.FullName,
-                Email = user.Email,
-                NewPassword = newPassword
-            }
+            new UserAddedEvent { User = UserDto.FromUser(user) }
         );
 
-        return new None();
+        return new Success();
     }
 }

@@ -1,5 +1,4 @@
 ﻿using Application.Caching;
-using Application.Settings;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Options;
 using System.Collections.Concurrent;

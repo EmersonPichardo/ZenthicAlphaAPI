@@ -1,4 +1,4 @@
-﻿using Application.Settings;
+﻿using Infrastructure.Behaviors.Settings;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -22,24 +22,26 @@ internal class PerformanceBehavior<TRequest, TResponse>(
         CancellationToken cancellationToken)
     {
         timer.Start();
-        var response = await next().ConfigureAwait(false);
+        var response = await next();
         timer.Stop();
 
         var milliseconds = timer.ElapsedMilliseconds;
 
         if (milliseconds > performanceSettings.RequestProcessingThresholdMilliseconds)
-            await LogPerformanceIssue(milliseconds);
+        {
+            logger?.LogWarning("Long running request: {@RequestName}({Milliseconds}ms)",
+                typeof(TRequest).Name,
+                milliseconds
+            );
+        }
+        else
+        {
+            logger?.LogInformation("Request {@RequestName} processed in {Milliseconds}ms",
+                typeof(TRequest).Name,
+                milliseconds
+            );
+        }
 
         return response;
-    }
-
-    private async Task LogPerformanceIssue(long elapsedMilliseconds)
-    {
-        logger?.LogWarning("Long running request: {@RequestName}({@Milliseconds}ms)",
-            typeof(TRequest).Name,
-            elapsedMilliseconds
-        );
-
-        await Task.CompletedTask;
     }
 }

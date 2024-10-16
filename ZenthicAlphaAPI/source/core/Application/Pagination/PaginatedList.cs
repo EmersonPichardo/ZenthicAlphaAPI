@@ -4,7 +4,6 @@ using System.Linq.Expressions;
 namespace Application.Pagination;
 
 public class PaginatedList<T>
-    where T : class
 {
     public required IReadOnlyCollection<T> Items { get; init; } = new List<T>();
     public required int CurrentPage { get; init; }
@@ -26,7 +25,7 @@ public class PaginatedList<T>
         var pageSizeValue = pageSize.GetValueOrDefault(10);
 
         if (currentPageValue < 1)
-            return new PaginatedList<T>()
+            return new PaginatedList<T>
             {
                 Items = [],
                 TotalCount = 0,
@@ -45,7 +44,7 @@ public class PaginatedList<T>
             .Take(pageSizeValue)
             .ToListAsync(cancellationToken);
 
-        return new PaginatedList<T>()
+        return new PaginatedList<T>
         {
             Items = paginatedItems,
             TotalCount = count,

@@ -1,7 +1,7 @@
 ﻿using Application.Events;
 using Application.Failures;
-using Identity.Application._Common.Persistence.Databases;
 using Identity.Application.Roles.Delete;
+using Identity.Infrastructure.Persistence.Databases.IdentityDbContext;
 using MediatR;
 using OneOf;
 using OneOf.Types;
@@ -9,12 +9,12 @@ using OneOf.Types;
 namespace Identity.Infrastructure.Roles.Delete;
 
 internal class DeleteRoleCommandHandler(
-    IIdentityDbContext dbContext,
+    IdentityModuleDbContext dbContext,
     IEventPublisher eventPublisher
 )
-    : IRequestHandler<DeleteRoleCommand, OneOf<None, Failure>>
+    : IRequestHandler<DeleteRoleCommand, OneOf<Success, Failure>>
 {
-    public async Task<OneOf<None, Failure>> Handle(DeleteRoleCommand command, CancellationToken cancellationToken)
+    public async Task<OneOf<Success, Failure>> Handle(DeleteRoleCommand command, CancellationToken cancellationToken)
     {
         var foundRole = await dbContext
             .Roles
@@ -27,9 +27,9 @@ internal class DeleteRoleCommandHandler(
         await dbContext.SaveChangesAsync(cancellationToken);
 
         eventPublisher.EnqueueEvent(
-                new RoleDeletedEvent() { Entity = foundRole }
-            );
+            new RoleDeletedEvent() { Entity = foundRole }
+        );
 
-        return new None();
+        return new Success();
     }
 }

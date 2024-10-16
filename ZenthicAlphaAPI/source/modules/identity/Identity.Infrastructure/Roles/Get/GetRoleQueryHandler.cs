@@ -1,7 +1,7 @@
 ﻿using Application.Failures;
-using Identity.Application._Common.Helpers;
-using Identity.Application._Common.Persistence.Databases;
+using Application.Helpers;
 using Identity.Application.Roles.Get;
+using Identity.Infrastructure.Persistence.Databases.IdentityDbContext;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using OneOf;
@@ -9,7 +9,7 @@ using OneOf;
 namespace Identity.Infrastructure.Roles.Get;
 
 internal class GetRoleQueryHandler(
-    IIdentityDbContext dbContext
+    IdentityModuleDbContext dbContext
 )
     : IRequestHandler<GetRoleQuery, OneOf<GetRoleQueryResponse, Failure>>
 {
@@ -29,14 +29,12 @@ internal class GetRoleQueryHandler(
         var selectedPermissions = foundRole
             .Permissions
             .OrderBy(permission => permission.Component)
-            .GroupBy(
-                permission => permission.Component,
-                permission => permission.RequiredAccess.ToBoolArray(),
-                (_, group) => group.First()
-            )
-            .ToArray();
+            .ToDictionary(
+                permission => permission.Component.ToString(),
+                permission => permission.RequiredAccess.AsString()
+            );
 
-        return new GetRoleQueryResponse()
+        return new GetRoleQueryResponse
         {
             Id = request.Id,
             Name = foundRole.Name,

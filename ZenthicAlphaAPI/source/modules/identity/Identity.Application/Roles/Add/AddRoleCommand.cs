@@ -1,14 +1,15 @@
-﻿using Application.Authorization;
+﻿using Application.Auth;
 using Application.Caching;
 using Application.Commands;
 using Domain.Modularity;
 
 namespace Identity.Application.Roles.Add;
 
-[Authorize(Component.Roles, Permission.Add), Cache(Component.Roles)]
+[Cache(Component.Roles)]
+[Authorize(Component.Roles, Permission.Add)]
 public record AddRoleCommand
     : ICommand
 {
     public required string Name { get; init; }
-    public required bool[][] SelectedPermissions { get; init; }
+    public required IReadOnlyDictionary<string, string[]> SelectedPermissions { get; init; }
 }

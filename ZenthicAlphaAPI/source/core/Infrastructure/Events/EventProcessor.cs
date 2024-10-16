@@ -1,6 +1,6 @@
 ﻿using Application.Events;
-using Application.Settings;
 using MediatR;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 
@@ -8,8 +8,8 @@ namespace Infrastructure.Events;
 
 internal class EventProcessor(
     IEventPublisher eventPublisher,
-    IPublisher publisher,
-    IOptions<BackgroundTaskSettings> backgroundTaskSettingsOptions
+    IOptions<BackgroundTaskSettings> backgroundTaskSettingsOptions,
+    IServiceScopeFactory serviceScopeFactory
 )
     : BackgroundService
 {
@@ -28,10 +28,17 @@ internal class EventProcessor(
             var tasks = eventPublisher
                 .GetPendingEvents()
                 .Select(
-                    @event => publisher.Publish(@event, stoppingToken)
+                    @event =>
+                    {
+                        using var scope = serviceScopeFactory.CreateScope();
+                        var publisher = scope.ServiceProvider.GetRequiredService<IPublisher>();
+
+                        return publisher.Publish(@event, stoppingToken);
+                    }
                 );
 
-            Task.WhenAll(tasks);
+            await Task.WhenAll(tasks);
+
         }
     }
 }

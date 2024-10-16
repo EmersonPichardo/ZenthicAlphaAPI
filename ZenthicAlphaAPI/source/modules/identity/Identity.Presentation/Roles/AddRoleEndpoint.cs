@@ -4,7 +4,4 @@ using Presentation.Endpoints.Defaults;
 
 namespace Identity.Presentation.Roles;
 
-public record AddRoleEndpoint : DefaultAddEndpoint<AddRoleCommand>
-{
-    public AddRoleEndpoint() : base(Component.Roles) { }
-}
+public record AddRoleEndpoint() : DefaultAddEndpoint<AddRoleCommand>(Component.Roles);

@@ -1,63 +1,53 @@
-﻿using Application.Failures;
+﻿using Application.Auth;
+using Application.Failures;
 using Application.Helpers;
-using Identity.Application._Common.Authentication;
-using Identity.Application._Common.Persistence.Databases;
-using Identity.Application.Users.ClearSession;
+using Domain.Identity;
 using Identity.Application.Users.RefreshToken;
-using Identity.Domain.User;
+using Identity.Infrastructure.Common.Auth;
+using Identity.Infrastructure.Common.Settings;
+using Identity.Infrastructure.Persistence.Databases.IdentityDbContext;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using OneOf;
 
 namespace Identity.Infrastructure.Users.RefreshToken;
 
 internal class RefreshUserTokenCommandHandler(
-    IIdentityService identityService,
-    IIdentityDbContext dbContext,
-    IJwtService jwtService,
-    ISender mediator
+    IUserSessionInfo userSessionInfo,
+    IdentityModuleDbContext dbContext,
+    IOptions<AuthSettings> authSettingsOptions,
+    JwtManager jwtManager
 )
     : IRequestHandler<RefreshUserTokenCommand, OneOf<RefreshUserTokenCommandResponse, Failure>>
 {
+    private readonly IUserSession userSession = userSessionInfo.Session;
+    private readonly AuthSettings.JwtSettings jwtSettings = authSettingsOptions.Value.Jwt;
+
     public async Task<OneOf<RefreshUserTokenCommandResponse, Failure>> Handle(RefreshUserTokenCommand command, CancellationToken cancellationToken)
     {
-        if (identityService.IsNotRefreshTokenCaller())
-            throw new UnauthorizedAccessException();
-
-        var currentUserIdentityResult = identityService
-            .GetCurrentUserIdentity();
-
-        if (currentUserIdentityResult.IsNull())
+        if (userSession is not RefreshTokenSession refreshTokenSession)
             return FailureFactory.UnauthorizedAccess();
-
-        if (currentUserIdentityResult.IsFailure())
-            return currentUserIdentityResult.GetValueAsFailure();
-
-        var currentUserId = currentUserIdentityResult.AsT0.Id;
 
         var foundUser = await dbContext
             .Users
             .AsNoTrackingWithIdentityResolution()
             .Include(entity => entity.UserRoles)
                 .ThenInclude(entity => entity.Role)
-                    .ThenInclude(entity => entity != null ? entity.Permissions : null)
+                    .ThenInclude(entity => entity.Permissions)
             .SingleOrDefaultAsync(
-                user
-                    => user.Id.Equals(currentUserId)
-                    && !user.Status.Equals(UserStatus.Inactive),
+                user => user.Id.Equals(refreshTokenSession.UserId),
                 cancellationToken
             );
 
-        if (foundUser is null)
+        if (foundUser is null || foundUser.Status.HasFlag(UserStatus.Inactive))
             return FailureFactory.UnauthorizedAccess();
 
         var userAccess = foundUser
             .UserRoles
             .Select(entity => entity.Role)
-            .SelectMany(entity => entity?.Permissions ?? [])
-            .Where(entity
-                => entity.RequiredAccess > 0
-            )
+            .SelectMany(entity => entity.Permissions)
+            .Where(entity => entity.RequiredAccess > 0)
             .GroupBy(
                 entity => entity.Component,
                 entity => entity.RequiredAccess
@@ -67,27 +57,25 @@ internal class RefreshUserTokenCommandHandler(
                 entity => entity.Aggregate((accessLevel, rolePermission) => accessLevel | rolePermission)
             );
 
-        var response = new RefreshUserTokenCommandResponse()
+        var response = new RefreshUserTokenCommandResponse
         {
-            DisplayName = foundUser.FullName,
+            DisplayName = foundUser.UserName,
             Status = foundUser.Status.ToString(),
             RefreshToken = new()
             {
-                ExpirationDate = DateTime.UtcNow.Add(jwtService.GetSettings().RefreshTokenLifetime),
-                Value = jwtService.GenerateJwtRefreshToken(foundUser.Id)
+                ExpirationDate = DateTime.UtcNow.Add(jwtSettings.RefreshTokenLifetime),
+                Value = jwtManager.GenerateJwtRefreshToken(foundUser.Id)
             },
             Token = new()
             {
-                ExpirationDate = DateTime.UtcNow.Add(jwtService.GetSettings().TokenLifetime),
-                Value = jwtService.GenerateJwtToken(foundUser.Id)
+                ExpirationDate = DateTime.UtcNow.Add(jwtSettings.TokenLifetime),
+                Value = jwtManager.GenerateJwtToken(foundUser, userAccess)
             },
-            Access = userAccess
+            Access = userAccess.ToDictionary(
+                keyValuePair => keyValuePair.Key,
+                keyValuePair => keyValuePair.Value.AsString()
+            )
         };
-
-        await mediator.Send(
-            new ClearUserSessionCommand() { UserId = foundUser.Id },
-            cancellationToken
-        );
 
         return response;
     }

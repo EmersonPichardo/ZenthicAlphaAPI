@@ -7,6 +7,6 @@ public class Role : BaseAuditableCompoundEntity
 {
     public required string Name { get; set; }
 
-    public IList<RolePermission> Permissions { get; set; } = [];
-    public IList<UserRole> UsersRoles { get; set; } = [];
+    public ICollection<UserRole> UserRoles { get; set; } = [];
+    public ICollection<RolePermission> Permissions { get; set; } = [];
 }

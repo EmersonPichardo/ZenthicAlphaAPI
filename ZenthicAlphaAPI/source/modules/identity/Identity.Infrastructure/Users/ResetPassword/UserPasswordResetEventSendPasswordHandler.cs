@@ -13,11 +13,11 @@ internal class UserPasswordResetEventSendPasswordHandler(
     {
         var message = EmailTemplateCollection
             .ResetPasswordTemplate
-            .Replace("[ReceiverFullName]", @event.FullName)
+            .Replace("[ReceiverFullName]", @event.User.UserName)
             .Replace("[NewPassword]", @event.NewPassword);
 
         await emailSender.SendAsync(
-            @event.Email,
+            @event.User.Email,
             $"Contraseña restablecida",
             message,
             cancellationToken

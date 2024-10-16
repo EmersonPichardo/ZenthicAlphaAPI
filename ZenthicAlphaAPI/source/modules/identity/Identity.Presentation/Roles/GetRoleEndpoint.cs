@@ -4,7 +4,4 @@ using Presentation.Endpoints.Defaults;
 
 namespace Identity.Presentation.Roles;
 
-public record GetRoleEndpoint : DefaultGetEndpoint<GetRoleQuery, GetRoleQueryResponse>
-{
-    public GetRoleEndpoint() : base(Component.Roles) { }
-}
+public record GetRoleEndpoint() : DefaultGetEntityEndpoint<GetRoleQuery, GetRoleQueryResponse>(Component.Roles);

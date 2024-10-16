@@ -2,7 +2,7 @@
 
 public interface IGetEntitiesPaginatedQuery
 {
-    string? Search { get; init; }
+    string? Filter { get; init; }
     int? CurrentPage { get; init; }
     int? PageSize { get; init; }
 }

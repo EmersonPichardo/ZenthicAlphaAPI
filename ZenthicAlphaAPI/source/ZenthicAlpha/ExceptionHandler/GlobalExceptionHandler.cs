@@ -1,21 +1,35 @@
 ﻿using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
+using System.Text.Json;
 
-namespace App.ExceptionHandler;
+namespace ZenthicAlpha.ExceptionHandler;
 
-internal class GlobalExceptionHandler : IExceptionHandler
+internal class GlobalExceptionHandler(
+    IHostEnvironment hostEnvironment
+)
+    : IExceptionHandler
 {
     public async ValueTask<bool> TryHandleAsync(
         HttpContext httpContext,
         Exception exception,
         CancellationToken cancellationToken)
     {
-        ProblemDetails problem = new()
+        ProblemDetails problem = exception switch
         {
-            Status = StatusCodes.Status500InternalServerError,
-            Title = "Un error inesperado ha ocurrido",
-            Detail = "Por favor intente en otro momento",
-            Type = "https://datatracker.ietf.org/doc/html/rfc7231#section-6.6.1"
+            BadHttpRequestException => new()
+            {
+                Status = StatusCodes.Status400BadRequest,
+                Title = "El formato del JSON es incorrecto",
+                Detail = $"El formato del valor de {((JsonException)exception.InnerException!).Path} es incorrecto",
+                Type = "https://datatracker.ietf.org/doc/html/rfc7231#section-6.6.1"
+            },
+            _ => new()
+            {
+                Status = StatusCodes.Status500InternalServerError,
+                Title = hostEnvironment.IsDevelopment() ? exception.Message : "Un error inesperado ha ocurrido",
+                Detail = hostEnvironment.IsDevelopment() ? exception.ToString() : "Por favor intente en otro momento",
+                Type = "https://datatracker.ietf.org/doc/html/rfc7231#section-6.6.1"
+            }
         };
 
         httpContext.Response.StatusCode = problem.Status.GetValueOrDefault();

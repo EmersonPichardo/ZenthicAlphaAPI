@@ -1,6 +1,7 @@
 ﻿using Application.Commands;
 using Domain.Modularity;
 using MediatR;
+using Presentation.Result;
 using System.Net;
 
 namespace Presentation.Endpoints.Defaults;
@@ -10,13 +11,13 @@ public abstract record DefaultAddEndpoint<TCommand>(Component Component) : IEndp
 {
     public Component Component { get; init; } = Component;
     public HttpVerbose Verbose { get; init; } = HttpVerbose.Post;
-    public string Route { get; init; } = "/";
+    public IReadOnlyCollection<string> Routes { get; init; } = ["/"];
     public HttpStatusCode SuccessStatusCode { get; init; } = HttpStatusCode.Created;
-    public Type? SuccessType { get; init; } = null;
+    public IReadOnlyCollection<Type> SuccessTypes { get; init; } = [];
     public Delegate Handler { get; init; } = async (
-        ISender mediator, TCommand command) =>
+        ISender mediator, TCommand command, CancellationToken cancellationToken) =>
     {
-        var result = await mediator.Send(command);
+        var result = await mediator.Send(command, cancellationToken);
 
         return result.Match(
             ResultFactory.Created,

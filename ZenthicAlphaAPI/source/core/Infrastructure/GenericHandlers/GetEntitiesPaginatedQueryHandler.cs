@@ -10,13 +10,13 @@ using System.Linq.Expressions;
 namespace Infrastructure.GenericHandlers;
 
 public abstract class GetEntitiesPaginatedQueryHandler<TQuery, TResponse, TEntity>(
-    IApplicationDbContext dbContext,
-    Func<string?, Expression<Func<TResponse, bool>>> getFilterExpression
+    IApplicationDbContext dbContext
 )
     where TQuery : GetEntitiesPaginatedQuery<TResponse>
     where TResponse : class
     where TEntity : class, ICompoundEntity
 {
+    protected abstract Expression<Func<TResponse, bool>> GetFilterExpression(string? filter);
     protected abstract Expression<Func<TEntity, TResponse>> MapToResponse();
 
     public async Task<OneOf<PaginatedList<TResponse>, Failure>> Handle(
@@ -31,7 +31,7 @@ public abstract class GetEntitiesPaginatedQueryHandler<TQuery, TResponse, TEntit
             .OrderBy(entity => entity.ClusterId)
             .ProjectTo(MapToResponse())
             .PaginatedListAsync(
-                getFilterExpression(query.Search),
+                GetFilterExpression(query.Filter),
                 query.CurrentPage,
                 query.PageSize,
                 cancellationToken

@@ -139,8 +139,8 @@ public static class RuleBuilderExtensions
             .Select(selector)
             .FirstOrDefaultAsync(cancellationToken);
 
-        if (foundEntityProperty?.Equals(property) ?? false)
-            return true;
+        if (foundEntityProperty?.Equals(property) ?? true)
+            return false;
 
         return await ExistInSet(
             entities,

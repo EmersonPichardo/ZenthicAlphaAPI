@@ -1,12 +1,13 @@
-using App;
 using Infrastructure;
+using ZenthicAlpha;
 
-var builder = WebApplication.CreateBuilder(args);
-builder.AddInfrastructure();
-builder.AddPresentation();
-builder.AddModules();
+await WebApplication.CreateBuilder(args)
 
-var app = builder.Build();
-app.UseModules();
-app.UsePresentation();
-app.Run();
+.AddInfrastructure()
+.AddPresentation()
+.AddModules()
+.Build()
+
+.UseModules()
+.UsePresentation()
+.RunAsync();

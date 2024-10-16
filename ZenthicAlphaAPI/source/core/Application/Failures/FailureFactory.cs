@@ -27,4 +27,6 @@ public static class FailureFactory
 
     public static PasswordChangeRequiredFailure PasswordChangeRequired(string title, string? detail = null, IDictionary<string, object?>? extensions = null)
         => PasswordChangeRequiredFailure.New(title, detail, extensions);
+    public static PasswordChangeRequiredFailure PasswordChangeRequired(string? detail = null, IDictionary<string, object?>? extensions = null)
+        => PasswordChangeRequiredFailure.New(detail, extensions);
 }

@@ -26,7 +26,7 @@ internal class CachingBehavior<TRequest, TResponse>(
             .GetCustomAttribute<CacheAttribute>();
 
         if (cacheAttribute is null)
-            return await next().ConfigureAwait(false);
+            return await next();
 
         var tag = cacheAttribute.GetTag();
 
@@ -34,7 +34,7 @@ internal class CachingBehavior<TRequest, TResponse>(
         {
             IBaseQuery => await QueryCacheHandlerAsync(tag, request, next, cancellationToken),
             IBaseCommand => await CommandCacheHandlerAsync(tag, next, cancellationToken),
-            _ => await next().ConfigureAwait(false)
+            _ => await next()
         };
 
         return response;
@@ -53,7 +53,7 @@ internal class CachingBehavior<TRequest, TResponse>(
         if (cachedResponse is not null)
             return (dynamic)cachedResponse;
 
-        var response = await next().ConfigureAwait(false);
+        var response = await next();
 
         if (response.IsSuccess())
             await cacheStore.SetAsync(tag, key, response.Value, cancellationToken);
@@ -67,6 +67,6 @@ internal class CachingBehavior<TRequest, TResponse>(
     {
         await cacheStore.ClearByTagAsync(tag, cancellationToken);
 
-        return await next().ConfigureAwait(false);
+        return await next();
     }
 }

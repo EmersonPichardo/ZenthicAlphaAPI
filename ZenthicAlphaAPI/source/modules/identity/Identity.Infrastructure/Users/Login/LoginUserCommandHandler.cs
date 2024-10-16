@@ -1,26 +1,29 @@
 ﻿using Application.Events;
 using Application.Failures;
-using Identity.Application._Common.Authentication;
-using Identity.Application._Common.Persistence.Databases;
-using Identity.Application._Common.Settings;
-using Identity.Application.Users.ClearSession;
+using Application.Helpers;
+using Domain.Identity;
 using Identity.Application.Users.Login;
-using Identity.Domain.User;
+using Identity.Infrastructure.Common.Auth;
+using Identity.Infrastructure.Common.Settings;
+using Identity.Infrastructure.Persistence.Databases.IdentityDbContext;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using OneOf;
 
 namespace Identity.Infrastructure.Users.Login;
 
 internal class LoginUserCommandHandler(
-    IIdentityDbContext dbContext,
-    IPasswordHasher passwordHasher,
-    IJwtService jwtService,
-    ISender mediator,
+    IdentityModuleDbContext dbContext,
+    PasswordManager passwordManager,
+    IOptions<AuthSettings> authSettingsOptions,
+    JwtManager jwtManager,
     IEventPublisher eventPublisher
 )
     : IRequestHandler<LoginUserCommand, OneOf<LoginUserCommandResponse, Failure>>
 {
+    private readonly AuthSettings.JwtSettings jwtSettings = authSettingsOptions.Value.Jwt;
+
     public async Task<OneOf<LoginUserCommandResponse, Failure>> Handle(LoginUserCommand command, CancellationToken cancellationToken)
     {
         var foundUser = await dbContext
@@ -28,69 +31,56 @@ internal class LoginUserCommandHandler(
             .AsNoTrackingWithIdentityResolution()
             .Include(entity => entity.UserRoles)
                 .ThenInclude(entity => entity.Role)
-                    .ThenInclude(entity => entity != null ? entity.Permissions : null)
-            .AsSingleQuery()
+                    .ThenInclude(entity => entity.Permissions)
             .SingleOrDefaultAsync(
-                user
-                    => user.Email.Equals(command.Email)
-                    && !user.Status.Equals(UserStatus.Inactive),
+                user => user.Email.Equals(command.Email),
                 cancellationToken
             );
 
-        if (foundUser is null)
-            return FailureFactory.UnauthorizedAccess(detail: "Email incorrecto o contraseña incorrecta");
+        var isInvalidUser = foundUser is null
+            || foundUser.Status.HasFlag(UserStatus.Inactive)
+            || !passwordManager.DoesPasswordsMatch(command.Password, foundUser.HashedPassword, foundUser.HashingStamp);
 
-        var hashingSettings = new HashingSettings()
-        {
-            Algorithm = foundUser.Algorithm,
-            Iterations = foundUser.Iterations
-        };
-
-        var hashedPassword = passwordHasher.Hash(command.Password, foundUser.Salt, hashingSettings);
-
-        if (!hashedPassword.Equals(foundUser.Password, StringComparison.Ordinal))
+        if (foundUser is null || isInvalidUser)
             return FailureFactory.UnauthorizedAccess(detail: "Email incorrecto o contraseña incorrecta");
 
         var userAccess = foundUser
             .UserRoles
             .Select(entity => entity.Role)
-            .SelectMany(entity => entity?.Permissions ?? [])
-            .Where(entity
-                => entity.RequiredAccess > 0
-            )
+            .SelectMany(entity => entity.Permissions)
+            .Where(entity => entity.RequiredAccess > 0)
             .GroupBy(
                 entity => entity.Component,
-                entity => entity.RequiredAccess
+                entity => entity.RequiredAccess,
+                (Component, RequiredAccesses) => new { Component, RequiredAccesses }
             )
             .ToDictionary(
-                entity => entity.Key.ToString(),
-                entity => entity.Aggregate((accessLevel, rolePermission) => accessLevel | rolePermission)
+                entity => entity.Component.ToString(),
+                entity => entity.RequiredAccesses.Aggregate((accessLevel, rolePermission) => accessLevel.AddFlag(rolePermission))
             );
 
-        var response = new LoginUserCommandResponse()
+        var response = new LoginUserCommandResponse
         {
-            DisplayName = foundUser.FullName,
+            DisplayName = foundUser.UserName,
             Status = foundUser.Status.ToString(),
             RefreshToken = new()
             {
-                ExpirationDate = DateTime.UtcNow.Add(jwtService.GetSettings().RefreshTokenLifetime),
-                Value = jwtService.GenerateJwtRefreshToken(foundUser.Id)
+                ExpirationDate = DateTime.UtcNow.Add(jwtSettings.RefreshTokenLifetime),
+                Value = jwtManager.GenerateJwtRefreshToken(foundUser.Id)
             },
             Token = new()
             {
-                ExpirationDate = DateTime.UtcNow.Add(jwtService.GetSettings().TokenLifetime),
-                Value = jwtService.GenerateJwtToken(foundUser.Id)
+                ExpirationDate = DateTime.UtcNow.Add(jwtSettings.TokenLifetime),
+                Value = jwtManager.GenerateJwtToken(foundUser, userAccess)
             },
-            Access = userAccess
+            Access = userAccess.ToDictionary(
+                keyValuePair => keyValuePair.Key,
+                keyValuePair => keyValuePair.Value.AsString()
+            )
         };
 
-        await mediator.Send(
-            new ClearUserSessionCommand() { UserId = foundUser.Id },
-            cancellationToken
-        );
-
         eventPublisher.EnqueueEvent(
-            new UserLoggedInEvent() { Entity = foundUser, Session = response }
+            new UserLoggedInEvent { Entity = foundUser, Session = response }
         );
 
         return response;

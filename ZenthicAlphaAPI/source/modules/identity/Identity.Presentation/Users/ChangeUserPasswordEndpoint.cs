@@ -2,6 +2,7 @@
 using Identity.Application.Users.ChangePassword;
 using MediatR;
 using Presentation.Endpoints;
+using Presentation.Result;
 using System.Net;
 
 namespace Identity.Presentation.Users;
@@ -10,9 +11,9 @@ public record ChangeUserPasswordEndpoint : IEndpoint
 {
     public Component Component { get; init; } = Component.Users;
     public HttpVerbose Verbose { get; init; } = HttpVerbose.Patch;
-    public string Route { get; init; } = "/password";
+    public IReadOnlyCollection<string> Routes { get; init; } = ["/password"];
     public HttpStatusCode SuccessStatusCode { get; init; } = HttpStatusCode.OK;
-    public Type? SuccessType { get; init; } = null;
+    public IReadOnlyCollection<Type> SuccessTypes { get; init; } = [];
     public Delegate Handler { get; init; } = async (
         ISender mediator, ChangeUserPasswordCommand command) =>
     {
