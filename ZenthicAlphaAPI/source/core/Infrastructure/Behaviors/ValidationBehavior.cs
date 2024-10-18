@@ -1,11 +1,13 @@
-﻿using Application.Failures;
+﻿using Application.Auth;
+using Application.Failures;
 using FluentValidation;
 using MediatR;
 
 namespace Infrastructure.Behaviors;
 
 internal class ValidationBehavior<TRequest, TResponse>(
-    IEnumerable<IValidator<TRequest>> validators
+    IEnumerable<IValidator<TRequest>> validators,
+    IUserSessionInfo userSessionInfo
 )
     : IPipelineBehavior<TRequest, TResponse>
      where TRequest : notnull
@@ -15,12 +17,15 @@ internal class ValidationBehavior<TRequest, TResponse>(
         RequestHandlerDelegate<TResponse> next,
         CancellationToken cancellationToken)
     {
-        var isValidatorsCountGot = validators.TryGetNonEnumeratedCount(out var validatorsCount);
+        var validatorsCount = validators.TryGetNonEnumeratedCount(out var count)
+            ? count : validators.Count();
 
-        if (isValidatorsCountGot ? validatorsCount is 0 : !validators.Any())
+        if (validatorsCount is 0)
             return await next().ConfigureAwait(false);
 
         var context = new ValidationContext<TRequest>(request);
+
+        context.RootContextData[nameof(IUserSession)] = userSessionInfo.Session;
 
         var validationTasks = validators
             .Select(validator =>

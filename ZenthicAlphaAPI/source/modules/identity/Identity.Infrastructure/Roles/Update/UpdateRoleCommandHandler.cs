@@ -1,5 +1,4 @@
-﻿using Application.Events;
-using Application.Failures;
+﻿using Application.Failures;
 using Domain.Modularity;
 using Identity.Application.Roles.Update;
 using Identity.Domain.Roles;
@@ -12,8 +11,7 @@ using OneOf.Types;
 namespace Identity.Infrastructure.Roles.Update;
 
 internal class UpdateRoleCommandHandler(
-    IdentityModuleDbContext dbContext,
-    IEventPublisher eventPublisher
+    IdentityModuleDbContext dbContext
 )
     : IRequestHandler<UpdateRoleCommand, OneOf<Success, Failure>>
 {
@@ -49,10 +47,6 @@ internal class UpdateRoleCommandHandler(
 
         dbContext.Update(foundRole);
         await dbContext.SaveChangesAsync(cancellationToken);
-
-        eventPublisher.EnqueueEvent(
-            new RoleUpdatedEvent { Entity = foundRole }
-        );
 
         return new Success();
     }

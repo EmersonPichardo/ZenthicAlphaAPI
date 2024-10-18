@@ -26,6 +26,10 @@ internal class TokenManager(
             HashingStamp = hashedResult.HashingStamp
         };
     }
+    public bool Equals(string token, string hashedToken, string hashingStamp)
+    {
+        return hashingManager.Equals(token, hashedToken, hashingStamp);
+    }
 
     public record TokenResult
     {

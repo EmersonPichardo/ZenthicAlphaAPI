@@ -28,16 +28,9 @@ internal class PasswordManager(
             HashingStamp = hashingResult.HashingStamp
         };
     }
-    public bool DoesPasswordsMatch(string password, string hashedPassword, string hashingStamp)
+    public bool Equals(string password, string hashedPassword, string hashingStamp)
     {
-        var HashedInputtedPassword = hashingManager.Hash(password, hashingStamp).HashedValue;
-
-        var HashedInputtedPasswordBytes = Convert.FromBase64String(HashedInputtedPassword);
-        var hashedPasswordBytes = Convert.FromBase64String(hashedPassword);
-
-        return CryptographicOperations.FixedTimeEquals(
-            HashedInputtedPasswordBytes.AsSpan(), hashedPasswordBytes.AsSpan()
-        );
+        return hashingManager.Equals(password, hashedPassword, hashingStamp);
     }
 
     private static string NewStringPassword()

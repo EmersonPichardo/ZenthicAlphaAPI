@@ -11,7 +11,7 @@ public abstract record DefaultDeleteEndpoint<TCommand>(Component Component) : IE
 {
     public Component Component { get; init; } = Component;
     public HttpVerbose Verbose { get; init; } = HttpVerbose.Delete;
-    public IReadOnlyCollection<string> Routes { get; init; } = ["/"];
+    public IReadOnlyCollection<string> Routes { get; init; } = ["/{id:guid}"];
     public HttpStatusCode SuccessStatusCode { get; init; } = HttpStatusCode.OK;
     public IReadOnlyCollection<Type> SuccessTypes { get; init; } = [];
     public Delegate Handler { get; init; } = async (

@@ -32,7 +32,7 @@ internal class ChangeUserPasswordCommandHandler(
 
         var isInvalidUser = foundUser is null
             || foundUser.Status.HasFlag(UserStatus.Inactive)
-            || !passwordManager.DoesPasswordsMatch(command.CurrentPassword, foundUser.HashedPassword, foundUser.HashingStamp);
+            || !passwordManager.Equals(command.CurrentPassword, foundUser.HashedPassword, foundUser.HashingStamp);
 
         if (foundUser is null || isInvalidUser)
             return FailureFactory.UnauthorizedAccess();

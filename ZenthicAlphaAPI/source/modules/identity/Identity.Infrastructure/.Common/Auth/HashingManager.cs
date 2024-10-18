@@ -41,6 +41,17 @@ internal class HashingManager(
             HashingStamp = hashingStamp
         };
     }
+    public bool Equals(string value, string hashedValue, string hashingStamp)
+    {
+        var HashedPlainValue = Hash(value, hashingStamp).HashedValue;
+
+        var HashedPlainValueBytes = Convert.FromBase64String(HashedPlainValue);
+        var hashedValueBytes = Convert.FromBase64String(hashedValue);
+
+        return CryptographicOperations.FixedTimeEquals(
+            HashedPlainValueBytes.AsSpan(), hashedValueBytes.AsSpan()
+        );
+    }
 
     public record HashingResult
     {

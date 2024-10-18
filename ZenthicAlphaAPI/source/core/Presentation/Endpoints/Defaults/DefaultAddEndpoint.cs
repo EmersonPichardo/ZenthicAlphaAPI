@@ -1,13 +1,14 @@
 ﻿using Application.Commands;
 using Domain.Modularity;
 using MediatR;
+using OneOf.Types;
 using Presentation.Result;
 using System.Net;
 
 namespace Presentation.Endpoints.Defaults;
 
-public abstract record DefaultAddEndpoint<TCommand>(Component Component) : IEndpoint
-    where TCommand : ICommand
+public abstract record DefaultAddEndpoint<TCommand, TResponse>(Component Component) : IEndpoint
+    where TCommand : ICommand<TResponse>
 {
     public Component Component { get; init; } = Component;
     public HttpVerbose Verbose { get; init; } = HttpVerbose.Post;
@@ -25,3 +26,7 @@ public abstract record DefaultAddEndpoint<TCommand>(Component Component) : IEndp
         );
     };
 }
+
+public abstract record DefaultAddEndpoint<TCommand>(Component Component)
+    : DefaultAddEndpoint<TCommand, Success>(Component)
+    where TCommand : ICommand<Success>;

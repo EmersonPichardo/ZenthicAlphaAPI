@@ -7,16 +7,17 @@ using System.Net;
 namespace Presentation.Endpoints.Defaults;
 
 public abstract record DefaultUpdateEndpoint<TCommand>(Component Component) : IEndpoint
-    where TCommand : ICommand
+    where TCommand : IUpdateCommand
 {
     public Component Component { get; init; } = Component;
     public HttpVerbose Verbose { get; init; } = HttpVerbose.Put;
-    public IReadOnlyCollection<string> Routes { get; init; } = ["/"];
+    public IReadOnlyCollection<string> Routes { get; init; } = ["/{id:guid}"];
     public HttpStatusCode SuccessStatusCode { get; init; } = HttpStatusCode.OK;
     public IReadOnlyCollection<Type> SuccessTypes { get; init; } = [];
     public Delegate Handler { get; init; } = async (
-        ISender mediator, TCommand command, CancellationToken cancellationToken) =>
+        ISender mediator, Guid id, TCommand command, CancellationToken cancellationToken) =>
     {
+        command.Id = id;
         var result = await mediator.Send(command, cancellationToken);
 
         return result.Match(

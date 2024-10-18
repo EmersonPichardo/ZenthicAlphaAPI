@@ -2,6 +2,7 @@
 
 public static class GenericValidationErrorMessage
 {
+    public const string Unauthorized = "Unauthorized";
     public const string Required = "Required";
     public const string InvalidFormat = "Invalid format";
     public const string OnlyNumbers = "Only numbers are allowed";

@@ -8,7 +8,7 @@ namespace Identity.Application.Users.Add;
 [Cache(Component.Users)]
 [AllowAnonymous]
 public record AddUserCommand
-    : ICommand
+    : ICommand<AddUserCommandResponse>
 {
     public required string UserName { get; init; }
     public required string Email { get; init; }

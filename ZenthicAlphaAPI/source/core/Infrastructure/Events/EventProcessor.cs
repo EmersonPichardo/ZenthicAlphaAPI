@@ -25,20 +25,14 @@ internal class EventProcessor(
             if (eventPublisher.HasNoPendingEvents())
                 continue;
 
+            using var asyncScope = serviceScopeFactory.CreateAsyncScope();
+            var publisher = asyncScope.ServiceProvider.GetRequiredService<IPublisher>();
+
             var tasks = eventPublisher
                 .GetPendingEvents()
-                .Select(
-                    @event =>
-                    {
-                        using var scope = serviceScopeFactory.CreateScope();
-                        var publisher = scope.ServiceProvider.GetRequiredService<IPublisher>();
-
-                        return publisher.Publish(@event, stoppingToken);
-                    }
-                );
+                .Select(@event => publisher.Publish(@event, stoppingToken));
 
             await Task.WhenAll(tasks);
-
         }
     }
 }

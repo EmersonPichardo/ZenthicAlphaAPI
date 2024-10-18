@@ -4,4 +4,4 @@ using Presentation.Endpoints.Defaults;
 
 namespace Identity.Presentation.Users;
 
-public record AddUserEndpoint() : DefaultAddEndpoint<AddUserCommand>(Component.Users);
+public record AddUserEndpoint() : DefaultAddEndpoint<AddUserCommand, AddUserCommandResponse>(Component.Users);

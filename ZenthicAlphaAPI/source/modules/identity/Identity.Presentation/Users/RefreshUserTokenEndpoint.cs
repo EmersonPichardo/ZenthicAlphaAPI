@@ -10,8 +10,8 @@ namespace Identity.Presentation.Users;
 public record RefreshUserTokenEndpoint : IEndpoint
 {
     public Component Component { get; init; } = Component.Users;
-    public HttpVerbose Verbose { get; init; } = HttpVerbose.Patch;
-    public IReadOnlyCollection<string> Routes { get; init; } = ["/token"];
+    public HttpVerbose Verbose { get; init; } = HttpVerbose.Post;
+    public IReadOnlyCollection<string> Routes { get; init; } = ["/refresh-token"];
     public HttpStatusCode SuccessStatusCode { get; init; } = HttpStatusCode.OK;
     public IReadOnlyCollection<Type> SuccessTypes { get; init; } = [typeof(RefreshUserTokenCommandResponse)];
     public Delegate Handler { get; init; } = async (

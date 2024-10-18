@@ -10,8 +10,8 @@ namespace Identity.Presentation.Users;
 public record ChangeUserPasswordEndpoint : IEndpoint
 {
     public Component Component { get; init; } = Component.Users;
-    public HttpVerbose Verbose { get; init; } = HttpVerbose.Patch;
-    public IReadOnlyCollection<string> Routes { get; init; } = ["/password"];
+    public HttpVerbose Verbose { get; init; } = HttpVerbose.Put;
+    public IReadOnlyCollection<string> Routes { get; init; } = ["/me/password"];
     public HttpStatusCode SuccessStatusCode { get; init; } = HttpStatusCode.OK;
     public IReadOnlyCollection<Type> SuccessTypes { get; init; } = [];
     public Delegate Handler { get; init; } = async (

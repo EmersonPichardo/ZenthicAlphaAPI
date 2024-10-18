@@ -8,7 +8,6 @@ using Identity.Infrastructure.Common.Auth;
 using Identity.Infrastructure.Persistence.Databases.IdentityDbContext;
 using MediatR;
 using OneOf;
-using OneOf.Types;
 
 namespace Identity.Infrastructure.Users.Add;
 
@@ -17,9 +16,9 @@ internal class AddUserCommandHandler(
     PasswordManager passwordManager,
     IEventPublisher eventPublisher
 )
-    : IRequestHandler<AddUserCommand, OneOf<Success, Failure>>
+    : IRequestHandler<AddUserCommand, OneOf<AddUserCommandResponse, Failure>>
 {
-    public async Task<OneOf<Success, Failure>> Handle(AddUserCommand command, CancellationToken cancellationToken)
+    public async Task<OneOf<AddUserCommandResponse, Failure>> Handle(AddUserCommand command, CancellationToken cancellationToken)
     {
         var newPasswordResult = passwordManager.Generate(command.Password);
 
@@ -43,6 +42,12 @@ internal class AddUserCommandHandler(
             new UserAddedEvent { User = UserDto.FromUser(user) }
         );
 
-        return new Success();
+        return new AddUserCommandResponse
+        {
+            Id = user.Id,
+            UserName = user.UserName,
+            Email = user.Email,
+            Status = user.Status.ToString()
+        };
     }
 }

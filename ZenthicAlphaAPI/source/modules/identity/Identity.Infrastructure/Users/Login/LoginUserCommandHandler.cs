@@ -1,5 +1,4 @@
-﻿using Application.Events;
-using Application.Failures;
+﻿using Application.Failures;
 using Application.Helpers;
 using Domain.Identity;
 using Identity.Application.Users.Login;
@@ -17,8 +16,7 @@ internal class LoginUserCommandHandler(
     IdentityModuleDbContext dbContext,
     PasswordManager passwordManager,
     IOptions<AuthSettings> authSettingsOptions,
-    JwtManager jwtManager,
-    IEventPublisher eventPublisher
+    JwtManager jwtManager
 )
     : IRequestHandler<LoginUserCommand, OneOf<LoginUserCommandResponse, Failure>>
 {
@@ -39,7 +37,7 @@ internal class LoginUserCommandHandler(
 
         var isInvalidUser = foundUser is null
             || foundUser.Status.HasFlag(UserStatus.Inactive)
-            || !passwordManager.DoesPasswordsMatch(command.Password, foundUser.HashedPassword, foundUser.HashingStamp);
+            || !passwordManager.Equals(command.Password, foundUser.HashedPassword, foundUser.HashingStamp);
 
         if (foundUser is null || isInvalidUser)
             return FailureFactory.UnauthorizedAccess(detail: "Email incorrecto o contraseña incorrecta");
@@ -78,10 +76,6 @@ internal class LoginUserCommandHandler(
                 keyValuePair => keyValuePair.Value.AsString()
             )
         };
-
-        eventPublisher.EnqueueEvent(
-            new UserLoggedInEvent { Entity = foundUser, Session = response }
-        );
 
         return response;
     }

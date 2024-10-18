@@ -1,4 +1,5 @@
-﻿using Domain.Entities.Abstractions;
+﻿using Application.Auth;
+using Domain.Entities.Abstractions;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
@@ -7,6 +8,24 @@ namespace Infrastructure.Validations;
 
 public static class RuleBuilderExtensions
 {
+    public static IRuleBuilderOptions<TModel, TProperty> Authenticated<TModel, TProperty>(
+        this IRuleBuilder<TModel, TProperty> ruleBuilder
+    )
+    {
+        return ruleBuilder.Must((_, _, context)
+            => context.RootContextData[nameof(IUserSession)] is AuthenticatedSession
+        );
+    }
+
+    public static IRuleBuilderOptions<TModel, TProperty> Anonymous<TModel, TProperty>(
+        this IRuleBuilder<TModel, TProperty> ruleBuilder
+    )
+    {
+        return ruleBuilder.Must((_, _, context)
+            => context.RootContextData[nameof(IUserSession)] is null or AnonymousSession
+        );
+    }
+
     public static IRuleBuilderOptions<TModel, TProperty> ExistAsync<TModel, TProperty, TEntity>(
         this IRuleBuilder<TModel, TProperty> ruleBuilder,
         DbSet<TEntity> entities,

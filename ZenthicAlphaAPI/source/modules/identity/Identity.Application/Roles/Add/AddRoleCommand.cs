@@ -8,7 +8,7 @@ namespace Identity.Application.Roles.Add;
 [Cache(Component.Roles)]
 [Authorize(Component.Roles, Permission.Add)]
 public record AddRoleCommand
-    : ICommand
+    : ICommand<AddRoleCommandResponse>
 {
     public required string Name { get; init; }
     public required IReadOnlyDictionary<string, string[]> SelectedPermissions { get; init; }

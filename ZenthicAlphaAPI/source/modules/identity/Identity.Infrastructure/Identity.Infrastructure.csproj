@@ -28,6 +28,8 @@
     <Compile Include=".Persistence\Databases\IdentityModuleDbContext\IdentityModuleDbContext.cs" />
     <Compile Include=".Persistence\Databases\IdentityModuleDbContext\Migrations\20241015234609_Initial.cs" />
     <Compile Include=".Persistence\Databases\IdentityModuleDbContext\Migrations\20241015234609_Initial.Designer.cs" />
+    <Compile Include=".Persistence\Databases\IdentityModuleDbContext\Migrations\20241016165652_UserTokenType.cs" />
+    <Compile Include=".Persistence\Databases\IdentityModuleDbContext\Migrations\20241016165652_UserTokenType.Designer.cs" />
     <Compile Include=".Persistence\Databases\IdentityModuleDbContext\Migrations\IdentityModuleDbContextModelSnapshot.cs" />
   </ItemGroup>
 
