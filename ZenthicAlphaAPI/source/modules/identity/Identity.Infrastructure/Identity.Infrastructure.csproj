@@ -1,12 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <Configurations>Debug;Release</Configurations>
   </PropertyGroup>
-
   <ItemGroup>
     <Compile Include=".Common\Auth\HashingManager.cs" />
     <Compile Include=".Common\Auth\TokenManager.cs" />
@@ -32,14 +30,11 @@
     <Compile Include=".Persistence\Databases\IdentityModuleDbContext\Migrations\20241016165652_UserTokenType.Designer.cs" />
     <Compile Include=".Persistence\Databases\IdentityModuleDbContext\Migrations\IdentityModuleDbContextModelSnapshot.cs" />
   </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.10" />
-  </ItemGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\..\..\core\Infrastructure\Infrastructure.csproj" />
     <ProjectReference Include="..\Identity.Application\Identity.Application.csproj" />
   </ItemGroup>
-
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.0-rc.2.24474.3" />
+  </ItemGroup>
 </Project>
