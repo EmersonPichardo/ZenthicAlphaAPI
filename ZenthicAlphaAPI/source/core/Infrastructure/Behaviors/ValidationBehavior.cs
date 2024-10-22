@@ -7,7 +7,7 @@ namespace Infrastructure.Behaviors;
 
 internal class ValidationBehavior<TRequest, TResponse>(
     IEnumerable<IValidator<TRequest>> validators,
-    IUserSessionInfo userSessionInfo
+    IUserSessionService userSessionInfo
 )
     : IPipelineBehavior<TRequest, TResponse>
      where TRequest : notnull

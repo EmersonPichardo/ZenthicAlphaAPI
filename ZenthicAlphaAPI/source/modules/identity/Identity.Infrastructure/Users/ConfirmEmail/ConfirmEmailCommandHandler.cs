@@ -15,7 +15,7 @@ namespace Identity.Infrastructure.Users.ConfirmEmail;
 
 internal class ConfirmEmailCommandHandler(
     IdentityModuleDbContext dbContext,
-    IUserSessionInfo userSessionInfo,
+    IUserSessionService userSessionInfo,
     TokenManager tokenManager
 )
     : IRequestHandler<ConfirmEmailCommand, OneOf<Success, Failure>>

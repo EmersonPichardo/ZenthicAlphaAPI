@@ -15,7 +15,6 @@ public abstract record DefaultGetListEndpoint<
     where TGetAllQuery : GetAllEntitiesQuery<TGetAllResponse>, new()
     where TGetPaginatedQuery : GetEntitiesPaginatedQuery<TGetPaginatedResponse>, new()
 {
-    public Component Component { get; init; } = Component;
     public HttpVerbose Verbose { get; init; } = HttpVerbose.Get;
     public IReadOnlyCollection<string> Routes { get; init; } = ["/"];
     public HttpStatusCode SuccessStatusCode { get; init; } = HttpStatusCode.OK;

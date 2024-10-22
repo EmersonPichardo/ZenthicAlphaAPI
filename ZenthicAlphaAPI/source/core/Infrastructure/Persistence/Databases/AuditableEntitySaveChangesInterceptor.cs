@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 namespace Infrastructure.Persistence.Databases;
 
 public class AuditableEntitySaveChangesInterceptor(
-    IUserSessionInfo userSessionInfo
+    IUserSessionService userSessionInfo
 )
     : SaveChangesInterceptor
 {

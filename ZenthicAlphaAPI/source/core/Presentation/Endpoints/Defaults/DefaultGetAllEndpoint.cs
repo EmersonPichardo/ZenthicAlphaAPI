@@ -10,7 +10,6 @@ namespace Presentation.Endpoints.Defaults;
 public abstract record DefaultGetAllEndpoint<TQuery, TResponse>(Component Component) : IEndpoint
     where TQuery : GetAllEntitiesQuery<TResponse>, new()
 {
-    public Component Component { get; init; } = Component;
     public HttpVerbose Verbose { get; init; } = HttpVerbose.Get;
     public IReadOnlyCollection<string> Routes { get; init; } = ["/"];
     public HttpStatusCode SuccessStatusCode { get; init; } = HttpStatusCode.OK;

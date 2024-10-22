@@ -1,23 +1,22 @@
 ﻿using Domain.Modularity;
-using Identity.Application.Users.RefreshToken;
+using Identity.Application.Users.Login;
 using MediatR;
 using Presentation.Endpoints;
 using Presentation.Result;
 using System.Net;
 
-namespace Identity.Presentation.Users;
+namespace Identity.Presentation.Auth;
 
-public record RefreshUserTokenEndpoint : IEndpoint
+public record SignInEndpoint : IEndpoint
 {
-    public Component Component { get; init; } = Component.Users;
+    public Component Component { get; init; } = 0;
     public HttpVerbose Verbose { get; init; } = HttpVerbose.Post;
-    public IReadOnlyCollection<string> Routes { get; init; } = ["/refresh-token"];
+    public IReadOnlyCollection<string> Routes { get; init; } = ["/sign-in"];
     public HttpStatusCode SuccessStatusCode { get; init; } = HttpStatusCode.OK;
-    public IReadOnlyCollection<Type> SuccessTypes { get; init; } = [typeof(RefreshUserTokenCommandResponse)];
+    public IReadOnlyCollection<Type> SuccessTypes { get; init; } = [typeof(LoginUserCommandResponse)];
     public Delegate Handler { get; init; } = async (
-        ISender mediator, CancellationToken cancellationToken) =>
+        ISender mediator, LoginUserCommand command, CancellationToken cancellationToken) =>
     {
-        var command = new RefreshUserTokenCommand();
         var result = await mediator.Send(command, cancellationToken);
 
         return result.Match(

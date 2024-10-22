@@ -10,7 +10,6 @@ namespace Presentation.Endpoints.Defaults;
 public abstract record DefaultAddEndpoint<TCommand, TResponse>(Component Component) : IEndpoint
     where TCommand : ICommand<TResponse>
 {
-    public Component Component { get; init; } = Component;
     public HttpVerbose Verbose { get; init; } = HttpVerbose.Post;
     public IReadOnlyCollection<string> Routes { get; init; } = ["/"];
     public HttpStatusCode SuccessStatusCode { get; init; } = HttpStatusCode.Created;

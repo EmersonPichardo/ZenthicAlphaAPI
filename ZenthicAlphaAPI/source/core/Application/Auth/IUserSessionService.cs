@@ -1,6 +1,6 @@
 ﻿namespace Application.Auth;
 
-public interface IUserSessionInfo
+public interface IUserSessionService
 {
     IUserSession Session { get; init; }
 }

@@ -2,13 +2,18 @@
 using Application.Exceptions;
 using Application.Persistence.Databases;
 using FluentValidation;
+using Identity.Domain.User;
 using Identity.Infrastructure.Common.Auth;
 using Identity.Infrastructure.Common.ModuleBehaviors;
 using Identity.Infrastructure.Common.Settings;
 using Identity.Infrastructure.Persistence.Databases.IdentityDbContext;
 using Infrastructure.Behaviors;
 using Infrastructure.Modularity;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authentication.OAuth;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -52,7 +57,7 @@ public class Installer : IModuleInstaller
             .ValidateOnStart();
 
         builder.Services
-            .AddScoped<IUserSessionInfo, UserSessionInfo>()
+            .AddScoped<IUserSessionService, UserSessionSession>()
             .AddKeyedScoped<IModuleBehavior, AuthorizationModuleBehavior>(BehaviorsConstants.AuthorizationBehaviorName)
             .AddScoped<JwtManager>()
             .AddScoped<HashingManager>()
@@ -64,10 +69,14 @@ public class Installer : IModuleInstaller
             .Get<AuthSettings>()
         ?? throw new NotFoundException($"Setting {nameof(AuthSettings)} was not found.");
 
-        builder.Services
-            .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-            .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
+        var authBuilder = builder.Services
+            .AddAuthentication(options =>
             {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+            })
+            .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme)
+            .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
                     ValidateIssuerSigningKey = true,
@@ -76,8 +85,34 @@ public class Installer : IModuleInstaller
                     ValidIssuer = builder.Environment.ApplicationName,
                     ValidateAudience = false,
                     ValidateLifetime = true
-                };
-            });
+                }
+            );
+
+        if (authSettings.OAuth?.Google is not null)
+            authBuilder.AddGoogle(
+                GoogleDefaults.AuthenticationScheme,
+                GoogleDefaults.DisplayName,
+                options =>
+                {
+                    options.ClientId = authSettings.OAuth!.Google!.ClientId;
+                    options.ClientSecret = authSettings.OAuth!.Google!.ClientSecret;
+
+                    options.ClaimActions.MapJsonKey(nameof(AuthenticatedSession.UserName), "name");
+                    options.ClaimActions.MapJsonKey(nameof(AuthenticatedSession.Email), "email");
+
+                    options.Events = new()
+                    {
+                        OnCreatingTicket = (OAuthCreatingTicketContext context) =>
+                        {
+                            context.Identity?.AddClaim(new(
+                                nameof(AuthenticatedSession.Status), OAuthUserStatus.Active.ToString()
+                            ));
+
+                            return Task.CompletedTask;
+                        }
+                    };
+                }
+            );
     }
     private static void AddFluentValidationServices(WebApplicationBuilder builder)
     {

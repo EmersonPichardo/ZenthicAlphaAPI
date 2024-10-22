@@ -16,11 +16,17 @@ internal class GlobalExceptionHandler(
     {
         ProblemDetails problem = exception switch
         {
-            BadHttpRequestException => new()
+            BadHttpRequestException badHttpRequestException when badHttpRequestException is { InnerException: JsonException } => new()
             {
                 Status = StatusCodes.Status400BadRequest,
-                Title = "El formato del JSON es incorrecto",
+                Title = exception.Message,
                 Detail = $"El formato del valor de {((JsonException)exception.InnerException!).Path} es incorrecto",
+                Type = "https://datatracker.ietf.org/doc/html/rfc7231#section-6.6.1"
+            },
+            BadHttpRequestException badHttpRequestException when badHttpRequestException is { InnerException: null } => new()
+            {
+                Status = StatusCodes.Status400BadRequest,
+                Title = exception.Message,
                 Type = "https://datatracker.ietf.org/doc/html/rfc7231#section-6.6.1"
             },
             _ => new()

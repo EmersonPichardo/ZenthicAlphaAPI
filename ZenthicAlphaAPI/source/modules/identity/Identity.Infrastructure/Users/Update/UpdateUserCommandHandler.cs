@@ -11,7 +11,7 @@ namespace Identity.Infrastructure.Users.Update;
 
 internal class UpdateUserCommandHandler(
     IdentityModuleDbContext dbContext,
-    IUserSessionInfo userSessionInfo,
+    IUserSessionService userSessionInfo,
     ISender mediator
 )
     : IRequestHandler<UpdateUserCommand, OneOf<Success, Failure>>

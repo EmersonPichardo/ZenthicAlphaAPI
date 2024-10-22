@@ -3,7 +3,7 @@
 [Flags]
 public enum UserStatus
 {
-    None = 0,
+    Active = 0,
     Inactive = 1,
     PasswordChangeRequired = 2,
     UnconfirmEmail = 4

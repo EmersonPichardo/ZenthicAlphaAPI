@@ -145,41 +145,57 @@ internal static partial class ConfigureBuilder
     {
         var assembly = Identity.Presentation.AssemblyReference.Assembly;
         var endpoints = AbstractHelpers.CreateInstancesAssignableFromType<IEndpoint>(assembly);
-        var endpointCollections = endpoints.GroupBy(
-            endpoint => endpoint.Component,
-            (key, collection) => new { Component = key, Endpoints = collection }
-        );
 
-        foreach (var collection in endpointCollections)
-        {
-            var group = app.MapGroup($"api/{collection.Component.ToString().ToNormalize()}");
-
-            foreach (var endpoint in collection.Endpoints)
-            {
-                var endpointBuilders = endpoint.Verbose switch
+        var endpointCollections = endpoints
+            .GroupBy(
+                endpoint => endpoint.Component,
+                (component, endpoints) => new
                 {
-                    HttpVerbose.Get => endpoint.Routes.Select(route => group.MapGet(route, endpoint.Handler)),
-                    HttpVerbose.Post => endpoint.Routes.Select(route => group.MapPost(route, endpoint.Handler)),
-                    HttpVerbose.Put => endpoint.Routes.Select(route => group.MapPut(route, endpoint.Handler)),
-                    HttpVerbose.Patch => endpoint.Routes.Select(route => group.MapPatch(route, endpoint.Handler)),
-                    HttpVerbose.Delete => endpoint.Routes.Select(route => group.MapDelete(route, endpoint.Handler)),
-                    _ => throw new NotImplementedException()
-                };
-
-                foreach (var endpointBuilder in endpointBuilders)
-                {
-                    endpointBuilder
-                        .AllowAnonymous()
-                        .WithTags($"{collection.Component}Endpoints")
-                        .Produces(401, typeof(ProblemDetails))
-                        .Produces(403, typeof(ProblemDetails))
-                        .Produces(500, typeof(ProblemDetails));
-
-                    foreach (var successType in endpoint.SuccessTypes)
-                        endpointBuilder.Produces((int)endpoint.SuccessStatusCode, successType);
+                    Component = component,
+                    Endpoints = endpoints.ToArray()
                 }
-            }
-        }
+            )
+            .ToArray();
+
+        var registrationActions = endpointCollections
+            .Select(collection => new Action(() =>
+                {
+                    var isRoot = collection.Component is 0;
+
+                    var group = app.MapGroup(
+                        isRoot ? "api" : $"api/{collection.Component.ToString().ToNormalize()}"
+                    );
+
+                    foreach (var endpoint in collection.Endpoints)
+                    {
+                        foreach (var route in endpoint.Routes)
+                        {
+                            var endpointBuilder = endpoint.Verbose switch
+                            {
+                                HttpVerbose.Get => group.MapGet(route, endpoint.Handler),
+                                HttpVerbose.Post => group.MapPost(route, endpoint.Handler),
+                                HttpVerbose.Put => group.MapPut(route, endpoint.Handler),
+                                HttpVerbose.Patch => group.MapPatch(route, endpoint.Handler),
+                                HttpVerbose.Delete => group.MapDelete(route, endpoint.Handler),
+                                _ => throw new NotImplementedException($"Verbose {endpoint.Verbose} is unsupported")
+                            };
+
+                            endpointBuilder
+                                .AllowAnonymous()
+                                .WithTags($"{(isRoot ? ".Root" : collection.Component)}Endpoints")
+                                .Produces(401, typeof(ProblemDetails))
+                                .Produces(403, typeof(ProblemDetails))
+                                .Produces(500, typeof(ProblemDetails));
+
+                            foreach (var successType in endpoint.SuccessTypes)
+                                endpointBuilder.Produces((int)endpoint.SuccessStatusCode, successType);
+                        }
+                    }
+                }
+            ))
+            .ToArray();
+
+        Parallel.Invoke(registrationActions);
 
         return app;
     }

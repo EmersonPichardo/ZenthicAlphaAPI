@@ -15,7 +15,7 @@ namespace Identity.Infrastructure.Users.ChangePassword;
 internal class ChangeUserPasswordCommandHandler(
     IdentityModuleDbContext dbContext,
     PasswordManager passwordManager,
-    IUserSessionInfo userSessionInfo
+    IUserSessionService userSessionInfo
 )
     : IRequestHandler<ChangeUserPasswordCommand, OneOf<Success, Failure>>
 {

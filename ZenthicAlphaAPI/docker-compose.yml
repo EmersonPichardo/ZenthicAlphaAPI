@@ -3,6 +3,10 @@ services:
     image: ${DOCKER_REGISTRY-}zenthic_alpha
     container_name: zenthicAlpha.api
     build:
+      secrets:
+        - identity_connection_string
+        - oauth_google_client_id
+        - oauth_google_client_secret
       context: .
       dockerfile: source/ZenthicAlpha/Dockerfile
     depends_on:
@@ -45,3 +49,11 @@ services:
     volumes:
       - ./orchestration/docker/seq/data:/data
     restart: unless-stopped
+
+secrets:
+  identity_connection_string:
+    environment: ConnectionStrings__IdentityModuleDbContext
+  oauth_google_client_id:
+    environment: AuthSettings__OAuth__Google__ClientId
+  oauth_google_client_secret:
+    environment: AuthSettings__OAuth__Google__ClientSecret

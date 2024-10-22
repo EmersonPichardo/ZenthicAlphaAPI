@@ -13,6 +13,9 @@ internal record AuthSettings
     [Required]
     public required TokenSettings Token { get; init; }
 
+    [Required]
+    public OAuthSettings? OAuth { get; init; }
+
     internal record JwtSettings
     {
         [Required, MinLength(64)]
@@ -48,5 +51,18 @@ internal record AuthSettings
 
         [Required]
         public required TimeSpan LifeTime { get; init; }
+    }
+    internal record OAuthSettings
+    {
+        public ProviderSettings? Google { get; init; }
+
+        internal record ProviderSettings
+        {
+            [Required]
+            public required string ClientId { get; init; }
+
+            [Required]
+            public required string ClientSecret { get; init; }
+        }
     }
 }

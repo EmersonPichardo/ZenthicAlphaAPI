@@ -10,15 +10,15 @@ using IUserSession = Application.Auth.IUserSession;
 
 namespace Identity.Infrastructure.Common.Auth;
 
-internal class UserSessionInfo(
+internal class UserSessionSession(
     IHttpContextAccessor httpContextAccessor,
-    ILogger<UserSessionInfo>? logger
+    ILogger<UserSessionSession>? logger
 )
-    : IUserSessionInfo
+    : IUserSessionService
 {
     public IUserSession Session { get; init; } = BuildSession(httpContextAccessor, logger);
 
-    private static IUserSession BuildSession(IHttpContextAccessor httpContextAccessor, ILogger<UserSessionInfo>? logger)
+    private static IUserSession BuildSession(IHttpContextAccessor httpContextAccessor, ILogger<UserSessionSession>? logger)
     {
         try
         {
@@ -49,7 +49,7 @@ internal class UserSessionInfo(
             return claimsPrincipal.HasClaim(JwtManager.RefreshTokenIdentifier);
         }
     }
-    private static IUserSession NewAuthorizedSession(ClaimsPrincipal claimsPrincipal, ILogger<UserSessionInfo>? logger)
+    private static IUserSession NewAuthorizedSession(ClaimsPrincipal claimsPrincipal, ILogger<UserSessionSession>? logger)
     {
         var idClaimResult = claimsPrincipal.GetGuidByName(nameof(AuthenticatedSession.Id));
         if (idClaimResult.IsFailure()) return HandleFailureResult(idClaimResult, logger);
@@ -80,7 +80,7 @@ internal class UserSessionInfo(
             Accesses = accesses
         };
     }
-    private static IUserSession NewRefreshTokenSession(ClaimsPrincipal claimsPrincipal, ILogger<UserSessionInfo>? logger)
+    private static IUserSession NewRefreshTokenSession(ClaimsPrincipal claimsPrincipal, ILogger<UserSessionSession>? logger)
     {
         var userIdClaimResult = claimsPrincipal.GetGuidByName(nameof(RefreshTokenSession.UserId));
         if (userIdClaimResult.IsFailure()) return HandleFailureResult(userIdClaimResult, logger);
@@ -90,7 +90,7 @@ internal class UserSessionInfo(
             UserId = userIdClaimResult.GetValue<Guid>()
         };
     }
-    private static AnonymousSession HandleFailureResult(IOneOf result, ILogger<UserSessionInfo>? logger)
+    private static AnonymousSession HandleFailureResult(IOneOf result, ILogger<UserSessionSession>? logger)
     {
         var exception = result.GetFailure().ToException();
         logger?.LogError(exception, "Sesion inválida");

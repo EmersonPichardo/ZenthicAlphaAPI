@@ -30,8 +30,19 @@ public static class ClaimsPrincipalExtensions
         return stringResult.Match<OneOf<Guid, Failure>>(
             stringValue => Guid.TryParse(stringValue, out var guidValue)
                 ? guidValue
-                : FailureFactory.NotFound(invalidSessionTitle, $"El formato del valor {name} es inválido")
-            ,
+                : FailureFactory.NotFound(invalidSessionTitle, $"El formato del valor {name} es inválido"),
+            failure => failure
+        );
+    }
+
+    public static OneOf<bool, Failure> GetBoolByName(this ClaimsPrincipal value, string name)
+    {
+        var stringResult = value.GetStringByName(name);
+
+        return stringResult.Match<OneOf<bool, Failure>>(
+            stringValue => bool.TryParse(stringValue, out var boolValue)
+                ? boolValue
+                : FailureFactory.NotFound(invalidSessionTitle, $"El formato del valor {name} es inválido"),
             failure => failure
         );
     }
@@ -44,8 +55,7 @@ public static class ClaimsPrincipalExtensions
         return stringResult.Match<OneOf<TEnum, Failure>>(
             stringValue => Enum.TryParse<TEnum>(stringValue, out var enumValue)
                 ? enumValue
-                : FailureFactory.NotFound(invalidSessionTitle, $"El formato del valor {name} es inválido")
-            ,
+                : FailureFactory.NotFound(invalidSessionTitle, $"El formato del valor {name} es inválido"),
             failure => failure
         );
     }

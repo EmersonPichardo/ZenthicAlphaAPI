@@ -9,7 +9,6 @@ namespace Presentation.Endpoints.Defaults;
 public abstract record DefaultDeleteEndpoint<TCommand>(Component Component) : IEndpoint
     where TCommand : IDeleteCommand, new()
 {
-    public Component Component { get; init; } = Component;
     public HttpVerbose Verbose { get; init; } = HttpVerbose.Delete;
     public IReadOnlyCollection<string> Routes { get; init; } = ["/{id:guid}"];
     public HttpStatusCode SuccessStatusCode { get; init; } = HttpStatusCode.OK;

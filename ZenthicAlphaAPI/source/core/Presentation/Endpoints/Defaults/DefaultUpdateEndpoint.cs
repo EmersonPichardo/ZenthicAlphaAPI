@@ -9,7 +9,6 @@ namespace Presentation.Endpoints.Defaults;
 public abstract record DefaultUpdateEndpoint<TCommand>(Component Component) : IEndpoint
     where TCommand : IUpdateCommand
 {
-    public Component Component { get; init; } = Component;
     public HttpVerbose Verbose { get; init; } = HttpVerbose.Put;
     public IReadOnlyCollection<string> Routes { get; init; } = ["/{id:guid}"];
     public HttpStatusCode SuccessStatusCode { get; init; } = HttpStatusCode.OK;

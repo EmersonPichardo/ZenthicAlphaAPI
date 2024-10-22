@@ -12,7 +12,7 @@
     <Compile Include=".Common\Auth\TokenManager.cs" />
     <Compile Include=".Common\Auth\RefreshTokenSession.cs" />
     <Compile Include=".Common\Auth\AuthorizedSession.cs" />
-    <Compile Include=".Common\Auth\UserSessionInfo.cs" />
+    <Compile Include=".Common\Auth\UserSessionSession.cs" />
     <Compile Include=".Common\Auth\EncodingHelper.cs" />
     <Compile Include=".Common\Auth\JwtManager.cs" />
     <Compile Include=".Common\Auth\PasswordManager.cs" />
@@ -34,6 +34,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.Google" Version="8.0.10" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.10" />
   </ItemGroup>
 

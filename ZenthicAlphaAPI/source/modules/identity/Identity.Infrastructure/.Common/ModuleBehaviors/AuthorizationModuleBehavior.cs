@@ -14,7 +14,7 @@ using System.Reflection;
 namespace Identity.Infrastructure.Common.ModuleBehaviors;
 
 internal class AuthorizationModuleBehavior(
-    IUserSessionInfo userSessionInfo
+    IUserSessionService userSessionInfo
 )
     : IModuleBehavior
 {

@@ -397,5 +397,8 @@ FodyWeavers.xsd
 # JetBrains Rider
 *.sln.iml
 
-#Docker data
+# Docker data
 /ZenthicAlphaAPI/orchestration/docker
+
+# Local files
+*.local

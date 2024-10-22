@@ -17,7 +17,7 @@ using OneOf;
 namespace Identity.Infrastructure.Users.GenerateEmailToken;
 
 internal class GenerateEmailTokenCommandHandler(
-    IUserSessionInfo userSessionInfo,
+    IUserSessionService userSessionInfo,
     IdentityModuleDbContext dbContext,
     TokenManager tokenManager,
     IOptions<AuthSettings> authSettingsOptions,

@@ -17,10 +17,9 @@ internal class JwtManager(
 )
 {
     public const string RefreshTokenIdentifier = "IsRefreshToken";
-
     private readonly AuthSettings.JwtSettings jwtSettings = authSettingsOptions.Value.Jwt;
 
-    public string GenerateJwtToken(User user, IReadOnlyDictionary<string, Permission> accesses)
+    public string Generate(User user, IReadOnlyDictionary<string, Permission> accesses)
     {
         var symmetricSecurityKey = new SymmetricSecurityKey(
             Encoding.UTF8.GetBytes(jwtSettings.Key)
@@ -41,13 +40,33 @@ internal class JwtManager(
             ]
         );
 
-        var jwtToken = new JwtSecurityTokenHandler()
+        return new JwtSecurityTokenHandler()
             .WriteToken(jwtSecurityToken);
-
-        return jwtToken;
     }
+    public string Generate(OAuthUser oAuthUser)
+    {
+        var symmetricSecurityKey = new SymmetricSecurityKey(
+            Encoding.UTF8.GetBytes(jwtSettings.Key)
+        );
 
-    public string GenerateJwtRefreshToken(Guid userId)
+        var jwtSecurityToken = new JwtSecurityToken
+        (
+            issuer: environment.ApplicationName,
+            expires: DateTime.UtcNow.Add(jwtSettings.TokenLifetime),
+            signingCredentials: new SigningCredentials(symmetricSecurityKey, SecurityAlgorithms.HmacSha512),
+            claims: [
+                new(JwtRegisteredClaimNames.Sid, Guid.NewGuid().ToString()),
+                new(nameof(AuthenticatedSession.Id), oAuthUser.Id.ToString()),
+                new(nameof(AuthenticatedSession.UserName), oAuthUser.UserName),
+                new(nameof(AuthenticatedSession.Email), oAuthUser.Email),
+                new(nameof(AuthorizedSession.Status), oAuthUser.Status.ToString()),
+            ]
+        );
+
+        return new JwtSecurityTokenHandler()
+            .WriteToken(jwtSecurityToken);
+    }
+    public string GenerateRefreshToken(Guid userId)
     {
         var symmetricSecurityKey = new SymmetricSecurityKey(
             Encoding.UTF8.GetBytes(jwtSettings.Key)

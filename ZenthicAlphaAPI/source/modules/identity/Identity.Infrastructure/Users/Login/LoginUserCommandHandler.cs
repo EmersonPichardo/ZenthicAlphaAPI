@@ -64,12 +64,12 @@ internal class LoginUserCommandHandler(
             RefreshToken = new()
             {
                 ExpirationDate = DateTime.UtcNow.Add(jwtSettings.RefreshTokenLifetime),
-                Value = jwtManager.GenerateJwtRefreshToken(foundUser.Id)
+                Value = jwtManager.GenerateRefreshToken(foundUser.Id)
             },
             Token = new()
             {
                 ExpirationDate = DateTime.UtcNow.Add(jwtSettings.TokenLifetime),
-                Value = jwtManager.GenerateJwtToken(foundUser, userAccess)
+                Value = jwtManager.Generate(foundUser, userAccess)
             },
             Access = userAccess.ToDictionary(
                 keyValuePair => keyValuePair.Key,

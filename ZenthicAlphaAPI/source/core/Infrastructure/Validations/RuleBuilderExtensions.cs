@@ -26,6 +26,13 @@ public static class RuleBuilderExtensions
         );
     }
 
+    public static IRuleBuilderOptions<TModel, string> Url<TModel>(
+        this IRuleBuilder<TModel, string> ruleBuilder
+    )
+    {
+        return ruleBuilder.Must(property => Uri.TryCreate(property, UriKind.Absolute, out _));
+    }
+
     public static IRuleBuilderOptions<TModel, TProperty> ExistAsync<TModel, TProperty, TEntity>(
         this IRuleBuilder<TModel, TProperty> ruleBuilder,
         DbSet<TEntity> entities,
