@@ -4,9 +4,29 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Presentation.Result;
 
-internal static class ProblemFactory
+public static class ProblemFactory
 {
-    internal static ProblemDetails Generic(GenericFailure failure) => new()
+    public static ProblemDetails CreateFromFailure(Failure failure) => failure switch
+    {
+        GenericFailure genericFailure
+            => Generic(genericFailure),
+
+        UnauthorizedAccessFailure unauthorizedAccessFailure
+            => UnauthorizedAccess(unauthorizedAccessFailure),
+
+        ForbiddenAccessFailure forbiddenAccessFailure
+            => ForbiddenAccess(forbiddenAccessFailure),
+
+        NotFoundFailure notFoundFailure
+            => NotFound(notFoundFailure),
+
+        InvalidRequestFailure invalidRequestFailure
+            => InvalidRequest(invalidRequestFailure),
+
+        _ => InternalServer()
+    };
+
+    private static ProblemDetails Generic(GenericFailure failure) => new()
     {
         Status = StatusCodes.Status500InternalServerError,
         Title = failure.Title,
@@ -14,8 +34,7 @@ internal static class ProblemFactory
         Type = "https://datatracker.ietf.org/doc/html/rfc7231#section-6.6.1",
         Extensions = { { "extensions", failure.Extensions } }
     };
-
-    internal static ProblemDetails UnauthorizedAccess(UnauthorizedAccessFailure failure) => new()
+    private static ProblemDetails UnauthorizedAccess(UnauthorizedAccessFailure failure) => new()
     {
         Status = StatusCodes.Status401Unauthorized,
         Title = failure.Title,
@@ -23,8 +42,7 @@ internal static class ProblemFactory
         Type = "https://datatracker.ietf.org/doc/html/rfc7235#section-3.1",
         Extensions = { { "extensions", failure.Extensions } }
     };
-
-    internal static ProblemDetails ForbiddenAccess(ForbiddenAccessFailure failure) => new()
+    private static ProblemDetails ForbiddenAccess(ForbiddenAccessFailure failure) => new()
     {
         Status = StatusCodes.Status403Forbidden,
         Title = failure.Title,
@@ -32,8 +50,7 @@ internal static class ProblemFactory
         Type = "https://datatracker.ietf.org/doc/html/rfc7231#section-6.5.3",
         Extensions = { { "extensions", failure.Extensions } }
     };
-
-    internal static ProblemDetails NotFound(NotFoundFailure failure) => new()
+    private static ProblemDetails NotFound(NotFoundFailure failure) => new()
     {
         Status = StatusCodes.Status404NotFound,
         Title = failure.Title,
@@ -41,8 +58,7 @@ internal static class ProblemFactory
         Type = "https://datatracker.ietf.org/doc/html/rfc7231#section-6.5.4",
         Extensions = { { "extensions", failure.Extensions } }
     };
-
-    internal static ProblemDetails InvalidRequest(InvalidRequestFailure failure) => new()
+    private static ProblemDetails InvalidRequest(InvalidRequestFailure failure) => new()
     {
         Status = StatusCodes.Status422UnprocessableEntity,
         Title = failure.Title,
@@ -50,8 +66,7 @@ internal static class ProblemFactory
         Type = "https://datatracker.ietf.org/doc/html/rfc7231#section-6.5.1",
         Extensions = { { "extensions", failure.Extensions } }
     };
-
-    internal static ProblemDetails InternalServer() => new()
+    private static ProblemDetails InternalServer() => new()
     {
         Status = StatusCodes.Status500InternalServerError,
         Title = "Un error inesperado ha ocurrido",

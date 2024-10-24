@@ -20,8 +20,13 @@ public record GoogleSignInEndpoint : IEndpoint
         return Results.Challenge(
             new()
             {
-                RedirectUri = $"/api{OAuthConstants.CallbackPath}?authenticationScheme={GoogleDefaults.AuthenticationScheme}",
-                Items = { { nameof(redirectUrl), redirectUrl } }
+                RedirectUri =
+                    $"/api{OAuthConstants.CallbackPath}" +
+                    $"?authenticationScheme={Uri.EscapeDataString(GoogleDefaults.AuthenticationScheme)}" +
+                    $"&redirectUrl={Uri.EscapeDataString(redirectUrl)}",
+                Items = {
+                    { "redirectUrl", redirectUrl }
+                }
             },
             [GoogleDefaults.AuthenticationScheme]
         );

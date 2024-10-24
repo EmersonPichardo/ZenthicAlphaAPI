@@ -14,8 +14,6 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using OneOf;
-using System.Text;
-using System.Text.Json;
 
 namespace Identity.Infrastructure.Auth.OAuthCallback;
 
@@ -26,11 +24,11 @@ internal class OAuthCallbackCommandHandler(
     IOptions<AuthSettings> authSettingsOptions,
     JwtManager jwtManager
 )
-    : IRequestHandler<OAuthCallbackCommand, OneOf<string, Failure>>
+    : IRequestHandler<OAuthCallbackCommand, OneOf<OAuthCallbackCommandResponse, Failure>>
 {
     private readonly AuthSettings.JwtSettings jwtSettings = authSettingsOptions.Value.Jwt;
 
-    public async Task<OneOf<string, Failure>> Handle(OAuthCallbackCommand command, CancellationToken cancellationToken)
+    public async Task<OneOf<OAuthCallbackCommandResponse, Failure>> Handle(OAuthCallbackCommand command, CancellationToken cancellationToken)
     {
         var userSession = await userSessionService.GetSessionAsync();
         var oauthSession = (OAuthSession)userSession;
@@ -48,7 +46,7 @@ internal class OAuthCallbackCommandHandler(
             Accesses = userAccesses
         };
 
-        var loginResponse = new LoginResponse
+        return new OAuthCallbackCommandResponse
         {
             UserName = oauthSession.UserName,
             Statuses = oauthSession.Status.AsString(),
@@ -67,12 +65,6 @@ internal class OAuthCallbackCommandHandler(
                 Value = jwtManager.GenerateRefreshToken()
             }
         };
-
-        var jsonResponse = JsonSerializer.Serialize(loginResponse);
-        var jsonResponseBytes = Encoding.Default.GetBytes(jsonResponse);
-        var base64Response = Convert.ToBase64String(jsonResponseBytes);
-
-        return $"{oauthSession.RedirectUrl}?base64-response={base64Response}";
     }
 
     private async Task<OneOf<(OAuthUserDto, IReadOnlyDictionary<string, Permission>), Failure>> AddOrUpdateOAuthUserAsync(
