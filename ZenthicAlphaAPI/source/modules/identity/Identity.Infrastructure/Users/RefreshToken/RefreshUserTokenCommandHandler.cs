@@ -10,22 +10,24 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using OneOf;
+using static Identity.Infrastructure.Common.Auth.JwtManager.JwtRequest;
 
 namespace Identity.Infrastructure.Users.RefreshToken;
 
 internal class RefreshUserTokenCommandHandler(
-    IUserSessionService userSessionInfo,
+    IUserSessionService userSessionService,
     IdentityModuleDbContext dbContext,
     IOptions<AuthSettings> authSettingsOptions,
     JwtManager jwtManager
 )
     : IRequestHandler<RefreshUserTokenCommand, OneOf<RefreshUserTokenCommandResponse, Failure>>
 {
-    private readonly IUserSession userSession = userSessionInfo.Session;
     private readonly AuthSettings.JwtSettings jwtSettings = authSettingsOptions.Value.Jwt;
 
     public async Task<OneOf<RefreshUserTokenCommandResponse, Failure>> Handle(RefreshUserTokenCommand command, CancellationToken cancellationToken)
     {
+        var userSession = await userSessionService.GetSessionAsync();
+
         if (userSession is not RefreshTokenSession refreshTokenSession)
             return FailureFactory.UnauthorizedAccess();
 
@@ -36,7 +38,7 @@ internal class RefreshUserTokenCommandHandler(
                 .ThenInclude(entity => entity.Role)
                     .ThenInclude(entity => entity.Permissions)
             .SingleOrDefaultAsync(
-                user => user.Id.Equals(refreshTokenSession.UserId),
+                user => user.Id == refreshTokenSession.UserId,
                 cancellationToken
             );
 
@@ -59,22 +61,22 @@ internal class RefreshUserTokenCommandHandler(
 
         var response = new RefreshUserTokenCommandResponse
         {
-            DisplayName = foundUser.UserName,
-            Status = foundUser.Status.ToString(),
+            UserName = foundUser.UserName,
+            Statuses = foundUser.Status.AsString(),
+            Accesses = userAccess.ToDictionary(
+                keyValuePair => keyValuePair.Key,
+                keyValuePair => keyValuePair.Value.AsString()
+            ),
+            AccessToken = new()
+            {
+                ExpirationDate = DateTime.UtcNow.Add(jwtSettings.TokenLifetime),
+                Value = jwtManager.Generate(FromUser(foundUser, userAccess))
+            },
             RefreshToken = new()
             {
                 ExpirationDate = DateTime.UtcNow.Add(jwtSettings.RefreshTokenLifetime),
-                Value = jwtManager.GenerateRefreshToken(foundUser.Id)
-            },
-            Token = new()
-            {
-                ExpirationDate = DateTime.UtcNow.Add(jwtSettings.TokenLifetime),
-                Value = jwtManager.Generate(foundUser, userAccess)
-            },
-            Access = userAccess.ToDictionary(
-                keyValuePair => keyValuePair.Key,
-                keyValuePair => keyValuePair.Value.AsString()
-            )
+                Value = jwtManager.GenerateRefreshToken()
+            }
         };
 
         return response;

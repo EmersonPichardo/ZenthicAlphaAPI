@@ -11,11 +11,11 @@ internal class ChangeUserPasswordCommandValidator
 {
     public ChangeUserPasswordCommandValidator()
     {
-        RuleFor(model => model.CurrentPassword)
+        RuleFor(command => command.CurrentPassword)
             .NotEmpty()
                 .WithMessage(GenericValidationErrorMessage.Required);
 
-        RuleFor(model => model.NewPassword)
+        RuleFor(command => command.NewPassword)
             .NotEmpty()
                 .WithMessage(GenericValidationErrorMessage.Required)
             .MinimumLength(PasswordPolicy.MinimumLength)
@@ -29,10 +29,10 @@ internal class ChangeUserPasswordCommandValidator
             .Matches(PasswordPolicy.SpecialCharacterRequirement)
                 .WithMessage(PasswordValidationErrorMessage.IncorrectPasswordPolicy);
 
-        RuleFor(model => model.RepeatedNewPassword)
+        RuleFor(command => command.RepeatedNewPassword)
             .NotEmpty()
                 .WithMessage(GenericValidationErrorMessage.Required)
-            .Equal(model => model.NewPassword)
+            .Equal(command => command.NewPassword)
                 .WithMessage(PasswordValidationErrorMessage.PasswordsMustMatch);
     }
 }

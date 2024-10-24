@@ -19,7 +19,7 @@ internal class GetRoleQueryHandler(
             .Roles
             .Include(role => role.Permissions)
             .FirstOrDefaultAsync(
-                role => role.Id.Equals(request.Id),
+                role => role.Id == request.Id,
                 cancellationToken
             );
 

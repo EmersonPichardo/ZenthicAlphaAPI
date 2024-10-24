@@ -15,9 +15,9 @@ public record ChangeUserPasswordEndpoint : IEndpoint
     public HttpStatusCode SuccessStatusCode { get; init; } = HttpStatusCode.OK;
     public IReadOnlyCollection<Type> SuccessTypes { get; init; } = [];
     public Delegate Handler { get; init; } = async (
-        ISender mediator, ChangeUserPasswordCommand command) =>
+        ISender sender, ChangeUserPasswordCommand command) =>
     {
-        var result = await mediator.Send(command);
+        var result = await sender.Send(command);
 
         return result.Match(
             ResultFactory.Ok,

@@ -2,5 +2,5 @@
 
 public interface IUserSessionService
 {
-    IUserSession Session { get; init; }
+    Task<IUserSession> GetSessionAsync();
 }

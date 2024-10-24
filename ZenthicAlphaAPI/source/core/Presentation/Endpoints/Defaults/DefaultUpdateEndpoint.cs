@@ -14,10 +14,10 @@ public abstract record DefaultUpdateEndpoint<TCommand>(Component Component) : IE
     public HttpStatusCode SuccessStatusCode { get; init; } = HttpStatusCode.OK;
     public IReadOnlyCollection<Type> SuccessTypes { get; init; } = [];
     public Delegate Handler { get; init; } = async (
-        ISender mediator, Guid id, TCommand command, CancellationToken cancellationToken) =>
+        ISender sender, Guid id, TCommand command, CancellationToken cancellationToken) =>
     {
         command.Id = id;
-        var result = await mediator.Send(command, cancellationToken);
+        var result = await sender.Send(command, cancellationToken);
 
         return result.Match(
             ResultFactory.Ok,

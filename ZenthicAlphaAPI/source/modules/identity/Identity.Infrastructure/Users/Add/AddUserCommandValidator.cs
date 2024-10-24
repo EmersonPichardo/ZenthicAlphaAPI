@@ -14,7 +14,7 @@ internal class AddUserCommandValidator
 {
     public AddUserCommandValidator(IdentityModuleDbContext dbContext)
     {
-        RuleFor(model => model.Password)
+        RuleFor(command => command.Password)
             .NotEmpty()
                 .WithMessage(GenericValidationErrorMessage.Required)
             .MinimumLength(PasswordPolicy.MinimumLength)
@@ -28,7 +28,7 @@ internal class AddUserCommandValidator
             .Matches(PasswordPolicy.SpecialCharacterRequirement)
                 .WithMessage(PasswordValidationErrorMessage.IncorrectPasswordPolicy);
 
-        RuleFor(model => model.RepeatedPassword)
+        RuleFor(command => command.RepeatedPassword)
             .NotEmpty()
                 .WithMessage(GenericValidationErrorMessage.Required)
             .Equal(model => model.Password)
@@ -50,9 +50,7 @@ internal class AddUserCommandValidator
             .NotExistAsync(dbContext.Users, entity => entity.Email)
                 .WithMessage(GenericValidationErrorMessage.Conflict);
 
-        RuleForEach(model => model.RoleIds)
-            .NotEmpty()
-                .WithMessage(GenericValidationErrorMessage.Required)
+        RuleForEach(command => command.RoleIds)
             .ExistAsync(dbContext.Roles, entity => entity.Id)
                 .WithMessage(GenericValidationErrorMessage.NotFound);
     }

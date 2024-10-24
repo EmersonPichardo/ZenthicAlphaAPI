@@ -15,9 +15,9 @@ public abstract record DefaultAddEndpoint<TCommand, TResponse>(Component Compone
     public HttpStatusCode SuccessStatusCode { get; init; } = HttpStatusCode.Created;
     public IReadOnlyCollection<Type> SuccessTypes { get; init; } = [];
     public Delegate Handler { get; init; } = async (
-        ISender mediator, TCommand command, CancellationToken cancellationToken) =>
+        ISender sender, TCommand command, CancellationToken cancellationToken) =>
     {
-        var result = await mediator.Send(command, cancellationToken);
+        var result = await sender.Send(command, cancellationToken);
 
         return result.Match(
             ResultFactory.Created,

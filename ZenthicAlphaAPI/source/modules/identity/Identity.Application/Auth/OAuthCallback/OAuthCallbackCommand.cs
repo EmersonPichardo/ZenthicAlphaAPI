@@ -1,9 +1,9 @@
 ﻿using Application.Auth;
 using Application.Commands;
 
-namespace Identity.Application.OAuth.OAuthCallback;
+namespace Identity.Application.Auth.OAuthCallback;
 
-[AllowAnonymous]
+[AuthorizeOAuth]
 public record OAuthCallbackCommand
     : ICommand<string>
 {

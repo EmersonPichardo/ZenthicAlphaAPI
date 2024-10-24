@@ -9,7 +9,7 @@ internal class ResetUserPasswordCommandValidator
 {
     public ResetUserPasswordCommandValidator()
     {
-        RuleFor(model => model.Id)
+        RuleFor(command => command.Id)
             .NotEmpty()
                 .WithMessage(GenericValidationErrorMessage.Required);
     }

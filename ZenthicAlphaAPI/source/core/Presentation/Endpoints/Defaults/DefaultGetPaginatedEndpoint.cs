@@ -15,12 +15,12 @@ public abstract record DefaultGetPaginatedEndpoint<TQuery, TResponse>(Component 
     public HttpStatusCode SuccessStatusCode { get; init; } = HttpStatusCode.OK;
     public IReadOnlyCollection<Type> SuccessTypes { get; init; } = [typeof(PaginatedList<TResponse>)];
     public Delegate Handler { get; init; } = async (
-        ISender mediator, int? page, int? pageSize, string? filter, CancellationToken cancellationToken) =>
+        ISender sender, int? page, int? pageSize, string? filter, CancellationToken cancellationToken) =>
     {
-        return await GetPaginatedResultAsync(mediator, page, pageSize, filter, cancellationToken);
+        return await GetPaginatedResultAsync(sender, page, pageSize, filter, cancellationToken);
     };
 
-    public static async Task<IResult> GetPaginatedResultAsync(ISender mediator, int? page, int? pageSize, string? filter, CancellationToken cancellationToken)
+    public static async Task<IResult> GetPaginatedResultAsync(ISender sender, int? page, int? pageSize, string? filter, CancellationToken cancellationToken)
     {
         var query = new TQuery
         {
@@ -29,7 +29,7 @@ public abstract record DefaultGetPaginatedEndpoint<TQuery, TResponse>(Component 
             PageSize = pageSize
         };
 
-        var result = await mediator.Send(query, cancellationToken);
+        var result = await sender.Send(query, cancellationToken);
 
         return result.Match(
             ResultFactory.Ok,

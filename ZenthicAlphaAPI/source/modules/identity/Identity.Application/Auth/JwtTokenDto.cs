@@ -1,4 +1,4 @@
-﻿namespace Identity.Application.Users;
+﻿namespace Identity.Application.Auth;
 
 public record JwtTokenDto
 {

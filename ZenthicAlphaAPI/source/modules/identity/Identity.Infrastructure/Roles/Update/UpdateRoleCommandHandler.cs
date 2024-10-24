@@ -28,7 +28,7 @@ internal class UpdateRoleCommandHandler(
 
         await dbContext
             .RolesPermissions
-            .Where(entity => entity.RoleId.Equals(command.Id))
+            .Where(entity => entity.RoleId == command.Id)
             .ExecuteDeleteAsync(cancellationToken);
 
         foreach ((var componentName, var permissionArray) in command.SelectedPermissions)

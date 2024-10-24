@@ -14,10 +14,12 @@ internal class IdentityModuleDbContext(
     , IApplicationDbContext
 {
     internal DbSet<User> Users => Set<User>();
+    internal DbSet<OAuthUser> OAuthUsers => Set<OAuthUser>();
     internal DbSet<UserToken> UserTokens => Set<UserToken>();
     internal DbSet<Role> Roles => Set<Role>();
     internal DbSet<RolePermission> RolesPermissions => Set<RolePermission>();
     internal DbSet<UserRole> UsersRoles => Set<UserRole>();
+    internal DbSet<OAuthUserRole> OAuthUsersRoles => Set<OAuthUserRole>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

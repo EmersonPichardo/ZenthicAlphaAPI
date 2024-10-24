@@ -9,7 +9,7 @@ internal class ConfirmEmailCommandValidator
 {
     public ConfirmEmailCommandValidator()
     {
-        RuleFor(model => model.Token)
+        RuleFor(command => command.Token)
             .NotEmpty()
                 .WithMessage(GenericValidationErrorMessage.Required);
     }

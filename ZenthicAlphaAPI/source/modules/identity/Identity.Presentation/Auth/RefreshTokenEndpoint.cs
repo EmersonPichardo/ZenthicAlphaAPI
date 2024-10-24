@@ -15,10 +15,10 @@ public record RefreshTokenEndpoint : IEndpoint
     public HttpStatusCode SuccessStatusCode { get; init; } = HttpStatusCode.OK;
     public IReadOnlyCollection<Type> SuccessTypes { get; init; } = [typeof(RefreshUserTokenCommandResponse)];
     public Delegate Handler { get; init; } = async (
-        ISender mediator, CancellationToken cancellationToken) =>
+        ISender sender, CancellationToken cancellationToken) =>
     {
         var command = new RefreshUserTokenCommand();
-        var result = await mediator.Send(command, cancellationToken);
+        var result = await sender.Send(command, cancellationToken);
 
         return result.Match(
             ResultFactory.Ok,

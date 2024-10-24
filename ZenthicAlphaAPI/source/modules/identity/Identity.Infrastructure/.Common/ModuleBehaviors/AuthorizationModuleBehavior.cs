@@ -24,38 +24,41 @@ internal class AuthorizationModuleBehavior(
     )
         where TRequest : notnull
     {
-        if (IsAnonymousCallAllow(request))
-            return new Success();
-
-        var result = userSessionInfo.Session switch
+        var result = await userSessionInfo.GetSessionAsync() switch
         {
-            AnonymousSession => FailureFactory.UnauthorizedAccess(),
-            RefreshTokenSession => ValidateRefreshTokenSession(request),
+            AnonymousSession
+                => HasAttribute<TRequest, AllowAnonymousAttribute>()
+                ? new Success()
+                : FailureFactory.UnauthorizedAccess(),
+
+            OAuthSession
+                => HasAttribute<TRequest, AuthorizeOAuthAttribute>()
+                ? new Success()
+                : FailureFactory.UnauthorizedAccess(),
+
+            RefreshTokenSession
+                => request is RefreshUserTokenCommand
+                ? new Success()
+                : FailureFactory.UnauthorizedAccess(),
+
             AuthorizedSession authorizedSession => ValidateAuthorizedSession(request, authorizedSession).Match(
                 success => ValidateAccessLevel(authorizedSession, request),
                 failure => failure
             ),
-            _ => FailureFactory.Generic("Unhandled session type", $"The session type {userSessionInfo.Session} doesn't has a handler")
+
+            _ => FailureFactory.Generic(
+                "Unhandled session type",
+                $"The session type {userSessionInfo.GetSessionAsync} doesn't has a handler"
+            )
         };
 
         return await Task.FromResult(result);
     }
 
-    private static bool IsAnonymousCallAllow<TRequest>(TRequest request)
-        where TRequest : notnull
+    private static bool HasAttribute<TRequest, TAttribute>()
+        where TAttribute : Attribute
     {
-        var allowAnonymousAttribute = request
-            .GetType()
-            .GetCustomAttribute<AllowAnonymousAttribute>();
-
-        return allowAnonymousAttribute is not null;
-    }
-    private static OneOf<Success, Failure> ValidateRefreshTokenSession<TRequest>(TRequest request)
-    {
-        if (request is not RefreshUserTokenCommand)
-            return FailureFactory.UnauthorizedAccess();
-
-        return new Success();
+        return typeof(TRequest).GetCustomAttribute<TAttribute>() is not null;
     }
     private static OneOf<Success, Failure> ValidateAuthorizedSession<TRequest>(TRequest request, AuthorizedSession authorizedSession)
     {

@@ -15,15 +15,15 @@ public abstract record DefaultGetEntityEndpoint<TQuery, TResponse>(Component Com
     public HttpStatusCode SuccessStatusCode { get; init; } = HttpStatusCode.OK;
     public IReadOnlyCollection<Type> SuccessTypes { get; init; } = [typeof(TResponse)];
     public Delegate Handler { get; init; } = async (
-        ISender mediator, Guid id, CancellationToken cancellationToken) =>
+        ISender sender, Guid id, CancellationToken cancellationToken) =>
     {
-        return await GetEntityResultAsync(mediator, id, cancellationToken);
+        return await GetEntityResultAsync(sender, id, cancellationToken);
     };
 
-    public static async Task<IResult> GetEntityResultAsync(ISender mediator, Guid id, CancellationToken cancellationToken)
+    public static async Task<IResult> GetEntityResultAsync(ISender sender, Guid id, CancellationToken cancellationToken)
     {
         var query = new TQuery { Id = id };
-        var result = await mediator.Send(query, cancellationToken);
+        var result = await sender.Send(query, cancellationToken);
 
         return result.Match(
             ResultFactory.Ok,

@@ -25,7 +25,7 @@ internal class ValidationBehavior<TRequest, TResponse>(
 
         var context = new ValidationContext<TRequest>(request);
 
-        context.RootContextData[nameof(IUserSession)] = userSessionInfo.Session;
+        context.RootContextData[nameof(IUserSession)] = await userSessionInfo.GetSessionAsync();
 
         var validationTasks = validators
             .Select(validator =>

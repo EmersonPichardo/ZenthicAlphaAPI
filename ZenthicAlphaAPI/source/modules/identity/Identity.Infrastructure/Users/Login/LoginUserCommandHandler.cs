@@ -9,6 +9,7 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using OneOf;
+using static Identity.Infrastructure.Common.Auth.JwtManager.JwtRequest;
 
 namespace Identity.Infrastructure.Users.Login;
 
@@ -31,7 +32,7 @@ internal class LoginUserCommandHandler(
                 .ThenInclude(entity => entity.Role)
                     .ThenInclude(entity => entity.Permissions)
             .SingleOrDefaultAsync(
-                user => user.Email.Equals(command.Email),
+                user => user.Email == command.Email,
                 cancellationToken
             );
 
@@ -42,7 +43,7 @@ internal class LoginUserCommandHandler(
         if (foundUser is null || isInvalidUser)
             return FailureFactory.UnauthorizedAccess(detail: "Email incorrecto o contraseña incorrecta");
 
-        var userAccess = foundUser
+        var userAccesses = foundUser
             .UserRoles
             .Select(entity => entity.Role)
             .SelectMany(entity => entity.Permissions)
@@ -59,22 +60,22 @@ internal class LoginUserCommandHandler(
 
         var response = new LoginUserCommandResponse
         {
-            DisplayName = foundUser.UserName,
-            Status = foundUser.Status.ToString(),
+            UserName = foundUser.UserName,
+            Statuses = foundUser.Status.AsString(),
+            Accesses = userAccesses.ToDictionary(
+                keyValuePair => keyValuePair.Key,
+                keyValuePair => keyValuePair.Value.AsString()
+            ),
+            AccessToken = new()
+            {
+                ExpirationDate = DateTime.UtcNow.Add(jwtSettings.TokenLifetime),
+                Value = jwtManager.Generate(FromUser(foundUser, userAccesses))
+            },
             RefreshToken = new()
             {
                 ExpirationDate = DateTime.UtcNow.Add(jwtSettings.RefreshTokenLifetime),
-                Value = jwtManager.GenerateRefreshToken(foundUser.Id)
-            },
-            Token = new()
-            {
-                ExpirationDate = DateTime.UtcNow.Add(jwtSettings.TokenLifetime),
-                Value = jwtManager.Generate(foundUser, userAccess)
-            },
-            Access = userAccess.ToDictionary(
-                keyValuePair => keyValuePair.Key,
-                keyValuePair => keyValuePair.Value.AsString()
-            )
+                Value = jwtManager.GenerateRefreshToken()
+            }
         };
 
         return response;

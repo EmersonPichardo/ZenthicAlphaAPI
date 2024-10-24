@@ -31,7 +31,7 @@ internal abstract class GetEntityQueryHandler<TQuery, TResponse, TEntity>(
 
         var entity = await entities
             .FirstOrDefaultAsync(
-                entity => entity.Id.Equals(query.Id),
+                entity => entity.Id == query.Id,
                 cancellationToken
             );
 

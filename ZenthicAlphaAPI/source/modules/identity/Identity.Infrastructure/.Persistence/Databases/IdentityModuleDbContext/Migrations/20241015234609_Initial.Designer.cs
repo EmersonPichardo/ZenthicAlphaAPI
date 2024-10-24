@@ -287,13 +287,13 @@ namespace Identity.Infrastructure.Migrations
             modelBuilder.Entity("Identity.Domain.User.UserRole", b =>
                 {
                     b.HasOne("Identity.Domain.Roles.Role", "Role")
-                        .WithMany("UserRoles")
+                        .WithMany("OAuthUserRoles")
                         .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("Identity.Domain.User.User", "User")
-                        .WithMany("UserRoles")
+                        .WithMany("OAuthUserRoles")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -316,14 +316,14 @@ namespace Identity.Infrastructure.Migrations
                 {
                     b.Navigation("Permissions");
 
-                    b.Navigation("UserRoles");
+                    b.Navigation("OAuthUserRoles");
                 });
 
             modelBuilder.Entity("Identity.Domain.User.User", b =>
                 {
                     b.Navigation("Tokens");
 
-                    b.Navigation("UserRoles");
+                    b.Navigation("OAuthUserRoles");
                 });
 #pragma warning restore 612, 618
         }

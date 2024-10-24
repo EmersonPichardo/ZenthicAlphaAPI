@@ -163,7 +163,7 @@ internal static partial class ConfigureBuilder
                     var isRoot = collection.Component is 0;
 
                     var group = app.MapGroup(
-                        isRoot ? "api" : $"api/{collection.Component.ToString().ToNormalize()}"
+                        isRoot ? "api" : $"api/{collection.Component.ToString().ToLower()}"
                     );
 
                     foreach (var endpoint in collection.Endpoints)

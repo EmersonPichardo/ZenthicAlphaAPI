@@ -7,33 +7,25 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 namespace Infrastructure.Persistence.Databases;
 
 public class AuditableEntitySaveChangesInterceptor(
-    IUserSessionService userSessionInfo
+    IUserSessionService userSessionService
 )
     : SaveChangesInterceptor
 {
-    private readonly IUserSession userSession = userSessionInfo.Session;
-
-    public override InterceptionResult<int> SavingChanges(
-        DbContextEventData eventData,
-        InterceptionResult<int> result)
-    {
-        UpdateAuditableData(eventData.Context);
-        return base.SavingChanges(eventData, result);
-    }
-
-    public override ValueTask<InterceptionResult<int>> SavingChangesAsync(
+    public override async ValueTask<InterceptionResult<int>> SavingChangesAsync(
         DbContextEventData eventData,
         InterceptionResult<int> result,
         CancellationToken cancellationToken = default)
     {
-        UpdateAuditableData(eventData.Context);
-        return base.SavingChangesAsync(eventData, result, cancellationToken);
+        await UpdateAuditableDataAsync(eventData.Context);
+        return await base.SavingChangesAsync(eventData, result, cancellationToken);
     }
 
-    private void UpdateAuditableData(DbContext? context)
+    private async Task UpdateAuditableDataAsync(DbContext? context)
     {
         if (context is null)
             return;
+
+        var userSession = await userSessionService.GetSessionAsync();
 
         Guid? currentUserId = userSession is AuthenticatedSession authenticatedSession
             ? authenticatedSession.Id

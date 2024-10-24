@@ -10,11 +10,11 @@ internal abstract class GetEntitiesPaginatedQueryValidator<TQuery>
 {
     protected GetEntitiesPaginatedQueryValidator()
     {
-        RuleFor(model => model.CurrentPage)
+        RuleFor(query => query.CurrentPage)
             .GreaterThan(0)
                 .WithMessage(GenericValidationErrorMessage.GreaterThan);
 
-        RuleFor(model => model.PageSize)
+        RuleFor(query => query.PageSize)
             .GreaterThan(0)
                 .WithMessage(GenericValidationErrorMessage.GreaterThan);
     }

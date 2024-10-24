@@ -15,9 +15,9 @@ public record SignInEndpoint : IEndpoint
     public HttpStatusCode SuccessStatusCode { get; init; } = HttpStatusCode.OK;
     public IReadOnlyCollection<Type> SuccessTypes { get; init; } = [typeof(LoginUserCommandResponse)];
     public Delegate Handler { get; init; } = async (
-        ISender mediator, LoginUserCommand command, CancellationToken cancellationToken) =>
+        ISender sender, LoginUserCommand command, CancellationToken cancellationToken) =>
     {
-        var result = await mediator.Send(command, cancellationToken);
+        var result = await sender.Send(command, cancellationToken);
 
         return result.Match(
             ResultFactory.Ok,

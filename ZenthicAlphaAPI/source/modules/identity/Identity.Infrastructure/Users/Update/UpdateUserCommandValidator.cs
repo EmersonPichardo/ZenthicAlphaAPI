@@ -22,7 +22,8 @@ internal class UpdateUserCommandValidator
                 RuleFor(command => command.Email)
                     .Custom((_, context) =>
                     {
-                        var authenticatedSession = (AuthenticatedSession)context.RootContextData[nameof(IUserSession)];
+                        var userSession = context.RootContextData[nameof(IUserSession)];
+                        var authenticatedSession = (AuthenticatedSession)userSession;
 
                         RuleFor(command => command.Email)
                             .NotExistIgnoringCurrentAsync(dbContext.Users, user => user.Email, command => authenticatedSession.Id)

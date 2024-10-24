@@ -1,5 +1,5 @@
 ﻿using FluentValidation;
-using Identity.Application.OAuth.OAuthCallback;
+using Identity.Application.Auth.OAuthCallback;
 using Infrastructure.Validations.ValidationErrorMessages;
 
 namespace Identity.Infrastructure.Auth.OAuthCallback;
@@ -9,7 +9,7 @@ internal class OAuthCallbackCommandValidator
 {
     public OAuthCallbackCommandValidator()
     {
-        RuleFor(model => model.AuthenticationScheme)
+        RuleFor(query => query.AuthenticationScheme)
             .NotEmpty()
                 .WithMessage(GenericValidationErrorMessage.Required);
     }

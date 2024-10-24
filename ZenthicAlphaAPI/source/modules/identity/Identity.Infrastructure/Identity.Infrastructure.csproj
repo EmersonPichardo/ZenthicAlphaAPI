@@ -9,11 +9,12 @@
 
   <ItemGroup>
     <Compile Include=".Common\Auth\HashingManager.cs" />
+    <Compile Include=".Common\Auth\OAuth\GoogleOAuthConfig.cs" />
+    <Compile Include=".Common\Auth\OAuth\OAuthSession.cs" />
     <Compile Include=".Common\Auth\TokenManager.cs" />
     <Compile Include=".Common\Auth\RefreshTokenSession.cs" />
     <Compile Include=".Common\Auth\AuthorizedSession.cs" />
     <Compile Include=".Common\Auth\UserSessionSession.cs" />
-    <Compile Include=".Common\Auth\EncodingHelper.cs" />
     <Compile Include=".Common\Auth\JwtManager.cs" />
     <Compile Include=".Common\Auth\PasswordManager.cs" />
     <Compile Include=".Common\Auth\PasswordPolicy.cs" />
@@ -22,6 +23,8 @@
     <Compile Include=".Common\Validations\ValidationErrorMessages\PasswordValidationErrorMessage.cs" />
     <Compile Include=".Persistence\Databases\IdentityModuleDbContext\Configurations\RoleConfiguration.cs" />
     <Compile Include=".Persistence\Databases\IdentityModuleDbContext\Configurations\RolePermissionConfiguration.cs" />
+    <Compile Include=".Persistence\Databases\IdentityModuleDbContext\Configurations\OAuthUserConfiguration.cs" />
+    <Compile Include=".Persistence\Databases\IdentityModuleDbContext\Configurations\OAuthUserRoleConfiguration.cs" />
     <Compile Include=".Persistence\Databases\IdentityModuleDbContext\Configurations\UserTokensConfiguration.cs" />
     <Compile Include=".Persistence\Databases\IdentityModuleDbContext\Configurations\UserConfiguration.cs" />
     <Compile Include=".Persistence\Databases\IdentityModuleDbContext\Configurations\UserRoleConfiguration.cs" />
@@ -30,6 +33,8 @@
     <Compile Include=".Persistence\Databases\IdentityModuleDbContext\Migrations\20241015234609_Initial.Designer.cs" />
     <Compile Include=".Persistence\Databases\IdentityModuleDbContext\Migrations\20241016165652_UserTokenType.cs" />
     <Compile Include=".Persistence\Databases\IdentityModuleDbContext\Migrations\20241016165652_UserTokenType.Designer.cs" />
+    <Compile Include=".Persistence\Databases\IdentityModuleDbContext\Migrations\20241023215136_OAuthUsers.cs" />
+    <Compile Include=".Persistence\Databases\IdentityModuleDbContext\Migrations\20241023215136_OAuthUsers.Designer.cs" />
     <Compile Include=".Persistence\Databases\IdentityModuleDbContext\Migrations\IdentityModuleDbContextModelSnapshot.cs" />
   </ItemGroup>
 

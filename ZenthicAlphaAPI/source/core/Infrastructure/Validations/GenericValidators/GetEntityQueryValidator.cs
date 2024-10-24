@@ -10,7 +10,7 @@ internal abstract class GetEntityQueryValidator<TQuery>
 {
     protected GetEntityQueryValidator()
     {
-        RuleFor(model => model.Id)
+        RuleFor(query => query.Id)
             .NotEmpty()
                 .WithMessage(GenericValidationErrorMessage.Required);
     }

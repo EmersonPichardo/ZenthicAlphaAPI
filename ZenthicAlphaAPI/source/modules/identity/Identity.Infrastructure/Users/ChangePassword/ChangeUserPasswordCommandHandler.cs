@@ -15,18 +15,19 @@ namespace Identity.Infrastructure.Users.ChangePassword;
 internal class ChangeUserPasswordCommandHandler(
     IdentityModuleDbContext dbContext,
     PasswordManager passwordManager,
-    IUserSessionService userSessionInfo
+    IUserSessionService userSessionService
 )
     : IRequestHandler<ChangeUserPasswordCommand, OneOf<Success, Failure>>
 {
     public async Task<OneOf<Success, Failure>> Handle(ChangeUserPasswordCommand command, CancellationToken cancellationToken)
     {
-        var authenticatedSession = (AuthenticatedSession)userSessionInfo.Session;
+        var userSession = await userSessionService.GetSessionAsync();
+        var authenticatedSession = (AuthenticatedSession)userSession;
 
         var foundUser = await dbContext
             .Users
             .SingleOrDefaultAsync(
-                user => user.Id.Equals(authenticatedSession.Id),
+                user => user.Id == authenticatedSession.Id,
                 cancellationToken
             );
 

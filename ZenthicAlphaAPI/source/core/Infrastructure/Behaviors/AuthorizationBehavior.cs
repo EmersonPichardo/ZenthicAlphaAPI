@@ -14,7 +14,7 @@ internal class AuthorizationBehavior<TRequest, TResponse>(
         RequestHandlerDelegate<TResponse> next,
         CancellationToken cancellationToken)
     {
-        return await next();
+        //return await next();
 
         var authorizationModuleBehaviorResult = await authorizationModuleBehavior
             .HandleAsync<TRequest, TResponse>(request, cancellationToken);

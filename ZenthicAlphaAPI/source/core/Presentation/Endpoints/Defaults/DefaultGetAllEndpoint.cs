@@ -15,15 +15,15 @@ public abstract record DefaultGetAllEndpoint<TQuery, TResponse>(Component Compon
     public HttpStatusCode SuccessStatusCode { get; init; } = HttpStatusCode.OK;
     public IReadOnlyCollection<Type> SuccessTypes { get; init; } = [typeof(IEnumerable<TResponse>)];
     public Delegate Handler { get; init; } = async (
-        ISender mediator, CancellationToken cancellationToken) =>
+        ISender sender, CancellationToken cancellationToken) =>
     {
-        return await GetAllQueryResultAsync(mediator, cancellationToken);
+        return await GetAllQueryResultAsync(sender, cancellationToken);
     };
 
-    public static async Task<IResult> GetAllQueryResultAsync(ISender mediator, CancellationToken cancellationToken)
+    public static async Task<IResult> GetAllQueryResultAsync(ISender sender, CancellationToken cancellationToken)
     {
         var query = new TQuery();
-        var result = await mediator.Send(query, cancellationToken);
+        var result = await sender.Send(query, cancellationToken);
 
         return result.Match(
             ResultFactory.Ok,

@@ -1,22 +1,28 @@
 ﻿using Application.Auth;
 using Application.Failures;
 using Application.Helpers;
-using Identity.Application.OAuth.OAuthCallback;
-using Identity.Application.Users.Login;
+using Domain.Modularity;
+using Identity.Application.Auth;
+using Identity.Application.Auth.AddOAuthUser;
+using Identity.Application.Auth.OAuthCallback;
+using Identity.Application.Auth.UpdateOAuthUser;
 using Identity.Domain.User;
 using Identity.Infrastructure.Common.Auth;
 using Identity.Infrastructure.Common.Settings;
+using Identity.Infrastructure.Persistence.Databases.IdentityDbContext;
 using MediatR;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using OneOf;
+using System.Text;
 using System.Text.Json;
 
 namespace Identity.Infrastructure.Auth.OAuthCallback;
 
 internal class OAuthCallbackCommandHandler(
-    IHttpContextAccessor httpContextAccessor,
+    IUserSessionService userSessionService,
+    IdentityModuleDbContext dbContext,
+    ISender sender,
     IOptions<AuthSettings> authSettingsOptions,
     JwtManager jwtManager
 )
@@ -26,71 +32,112 @@ internal class OAuthCallbackCommandHandler(
 
     public async Task<OneOf<string, Failure>> Handle(OAuthCallbackCommand command, CancellationToken cancellationToken)
     {
-        var httpContext = httpContextAccessor.HttpContext;
+        var userSession = await userSessionService.GetSessionAsync();
+        var oauthSession = (OAuthSession)userSession;
 
-        if (httpContext is null)
-            return FailureFactory.UnauthorizedAccess();
-
-        var oauthUserResult = await GetOAuthUserAsync(httpContext, command.AuthenticationScheme);
+        var oauthUserResult = await AddOrUpdateOAuthUserAsync(oauthSession, cancellationToken);
         if (oauthUserResult.IsFailure()) return oauthUserResult.GetFailure();
-        var (redirectUrl, oauthUser) = oauthUserResult.GetValue<(string, OAuthUser)>();
+        var (oauthUser, userAccesses) = oauthUserResult.GetValue<(OAuthUserDto, IReadOnlyDictionary<string, Permission>)>();
 
-        var loginResponse = new LoginUserCommandResponse
+        var jwtRequest = new JwtManager.JwtRequest
         {
-            DisplayName = oauthUser.UserName,
-            Status = oauthUser.Status.ToString(),
+            Id = oauthUser.Id.ToString(),
+            UserName = oauthSession.UserName,
+            Email = oauthSession.Email,
+            Status = oauthSession.Status.ToString(),
+            Accesses = userAccesses
+        };
+
+        var loginResponse = new LoginResponse
+        {
+            UserName = oauthSession.UserName,
+            Statuses = oauthSession.Status.AsString(),
+            Accesses = userAccesses.ToDictionary(
+                keyValuePair => keyValuePair.Key,
+                keyValuePair => keyValuePair.Value.AsString()
+            ),
+            AccessToken = new()
+            {
+                ExpirationDate = DateTime.UtcNow.Add(jwtSettings.TokenLifetime),
+                Value = jwtManager.Generate(jwtRequest)
+            },
             RefreshToken = new()
             {
                 ExpirationDate = DateTime.UtcNow.Add(jwtSettings.RefreshTokenLifetime),
-                Value = jwtManager.GenerateRefreshToken(oauthUser.Id)
-            },
-            Token = new()
-            {
-                ExpirationDate = DateTime.UtcNow.Add(jwtSettings.TokenLifetime),
-                Value = jwtManager.Generate(oauthUser)
-            },
-            Access = new Dictionary<string, string[]>()
+                Value = jwtManager.GenerateRefreshToken()
+            }
         };
 
         var jsonResponse = JsonSerializer.Serialize(loginResponse);
-        var jsonResponseBytes = EncodingHelper.GetBytes(jsonResponse);
+        var jsonResponseBytes = Encoding.Default.GetBytes(jsonResponse);
         var base64Response = Convert.ToBase64String(jsonResponseBytes);
 
-        return $"{redirectUrl}?token={base64Response}";
+        return $"{oauthSession.RedirectUrl}?base64-response={base64Response}";
     }
 
-    private static async Task<OneOf<(string redirectUrl, OAuthUser oauthUser), Failure>> GetOAuthUserAsync(HttpContext httpContext, string authenticationScheme)
+    private async Task<OneOf<(OAuthUserDto, IReadOnlyDictionary<string, Permission>), Failure>> AddOrUpdateOAuthUserAsync(
+        OAuthSession oauthSession, CancellationToken cancellationToken)
     {
-        var authenticationResult = await httpContext.AuthenticateAsync(authenticationScheme);
+        var foundOAuthUser = await dbContext.OAuthUsers
+            .AsNoTrackingWithIdentityResolution()
+            .Include(oauthUser => oauthUser.OAuthUserRoles)
+                .ThenInclude(entity => entity.Role)
+                    .ThenInclude(entity => entity.Permissions)
+            .FirstOrDefaultAsync(
+                oauthUser => oauthUser.Email == oauthSession.Email,
+                cancellationToken
+            );
 
-        if (!authenticationResult.Succeeded)
-            return FailureFactory.UnauthorizedAccess();
-
-        var userNameClaimResult = authenticationResult.Principal.GetStringByName(nameof(AuthenticatedSession.UserName));
-        if (userNameClaimResult.IsFailure()) return FailureFactory.UnauthorizedAccess();
-        var userName = userNameClaimResult.GetValue<string>();
-
-        var emailClaimResult = authenticationResult.Principal.GetStringByName(nameof(AuthenticatedSession.Email));
-        if (emailClaimResult.IsFailure()) return FailureFactory.UnauthorizedAccess();
-        var email = emailClaimResult.GetValue<string>();
-
-        var statusClaimResult = authenticationResult.Principal.GetEnumByName<OAuthUserStatus>(nameof(AuthenticatedSession.Status));
-        if (statusClaimResult.IsFailure()) return FailureFactory.UnauthorizedAccess();
-        var status = statusClaimResult.GetValue<OAuthUserStatus>();
-
-        var redirectUrl = authenticationResult.Properties.Items["redirectUrl"];
-
-        if (redirectUrl is null)
-            return FailureFactory.UnauthorizedAccess();
-
-        return (
-            redirectUrl,
-            new OAuthUser
+        if (foundOAuthUser is null)
+        {
+            var addOAuthUserCommand = new AddOAuthUserCommand
             {
-                UserName = userName,
-                Email = email,
-                Status = status
-            }
-        );
+                UserName = oauthSession.UserName,
+                Email = oauthSession.Email
+            };
+
+            var addOAuthUserCommandResult = await sender.Send(addOAuthUserCommand, cancellationToken);
+            if (addOAuthUserCommandResult.IsFailure()) return addOAuthUserCommandResult.GetFailure();
+
+            return (
+                addOAuthUserCommandResult.GetValue<AddOAuthUserCommandResponse>(),
+                new Dictionary<string, Permission>()
+            );
+        }
+        else
+        {
+            if (foundOAuthUser.Status.HasFlag(OAuthUserStatus.Inactive))
+                return FailureFactory.UnauthorizedAccess();
+
+            var updateOAuthUserCommand = new UpdateOAuthUserCommand
+            {
+                Id = foundOAuthUser.Id,
+                UserName = oauthSession.UserName,
+                Email = oauthSession.Email
+            };
+
+            var updateOAuthUserCommandResult = await sender.Send(updateOAuthUserCommand, cancellationToken);
+            if (updateOAuthUserCommandResult.IsFailure()) return updateOAuthUserCommandResult.GetFailure();
+
+            var userAccesses = foundOAuthUser
+                .OAuthUserRoles
+                .Select(entity => entity.Role)
+                .SelectMany(entity => entity.Permissions)
+                .Where(entity => entity.RequiredAccess > 0)
+                .GroupBy(
+                    entity => entity.Component,
+                    entity => entity.RequiredAccess,
+                    (Component, RequiredAccesses) => new { Component, RequiredAccesses }
+                )
+                .ToDictionary(
+                    entity => entity.Component.ToString(),
+                    entity => entity.RequiredAccesses.Aggregate((accessLevel, rolePermission) => accessLevel.AddFlag(rolePermission))
+                );
+
+            return (
+                OAuthUserDto.FromOAuthUser(foundOAuthUser),
+                userAccesses
+            );
+        }
     }
 }

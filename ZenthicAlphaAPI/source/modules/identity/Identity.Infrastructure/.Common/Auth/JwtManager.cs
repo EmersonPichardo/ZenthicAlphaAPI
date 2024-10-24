@@ -19,7 +19,7 @@ internal class JwtManager(
     public const string RefreshTokenIdentifier = "IsRefreshToken";
     private readonly AuthSettings.JwtSettings jwtSettings = authSettingsOptions.Value.Jwt;
 
-    public string Generate(User user, IReadOnlyDictionary<string, Permission> accesses)
+    public string Generate(JwtRequest jwtRequest)
     {
         var symmetricSecurityKey = new SymmetricSecurityKey(
             Encoding.UTF8.GetBytes(jwtSettings.Key)
@@ -32,41 +32,18 @@ internal class JwtManager(
             signingCredentials: new SigningCredentials(symmetricSecurityKey, SecurityAlgorithms.HmacSha512),
             claims: [
                 new(JwtRegisteredClaimNames.Sid, Guid.NewGuid().ToString()),
-                new(nameof(AuthenticatedSession.Id), user.Id.ToString()),
-                new(nameof(AuthenticatedSession.UserName), user.UserName),
-                new(nameof(AuthenticatedSession.Email), user.Email),
-                new(nameof(AuthorizedSession.Status), user.Status.ToString()),
-                new(nameof(AuthorizedSession.Accesses), JsonSerializer.Serialize(accesses))
+                new(nameof(AuthenticatedSession.Id), jwtRequest.Id),
+                new(nameof(AuthenticatedSession.UserName), jwtRequest.UserName),
+                new(nameof(AuthenticatedSession.Email), jwtRequest.Email),
+                new(nameof(AuthorizedSession.Status), jwtRequest.Status),
+                new(nameof(AuthorizedSession.Accesses), JsonSerializer.Serialize(jwtRequest.Accesses))
             ]
         );
 
         return new JwtSecurityTokenHandler()
             .WriteToken(jwtSecurityToken);
     }
-    public string Generate(OAuthUser oAuthUser)
-    {
-        var symmetricSecurityKey = new SymmetricSecurityKey(
-            Encoding.UTF8.GetBytes(jwtSettings.Key)
-        );
-
-        var jwtSecurityToken = new JwtSecurityToken
-        (
-            issuer: environment.ApplicationName,
-            expires: DateTime.UtcNow.Add(jwtSettings.TokenLifetime),
-            signingCredentials: new SigningCredentials(symmetricSecurityKey, SecurityAlgorithms.HmacSha512),
-            claims: [
-                new(JwtRegisteredClaimNames.Sid, Guid.NewGuid().ToString()),
-                new(nameof(AuthenticatedSession.Id), oAuthUser.Id.ToString()),
-                new(nameof(AuthenticatedSession.UserName), oAuthUser.UserName),
-                new(nameof(AuthenticatedSession.Email), oAuthUser.Email),
-                new(nameof(AuthorizedSession.Status), oAuthUser.Status.ToString()),
-            ]
-        );
-
-        return new JwtSecurityTokenHandler()
-            .WriteToken(jwtSecurityToken);
-    }
-    public string GenerateRefreshToken(Guid userId)
+    public string GenerateRefreshToken()
     {
         var symmetricSecurityKey = new SymmetricSecurityKey(
             Encoding.UTF8.GetBytes(jwtSettings.Key)
@@ -79,7 +56,6 @@ internal class JwtManager(
             signingCredentials: new SigningCredentials(symmetricSecurityKey, SecurityAlgorithms.HmacSha512),
             claims: [
                 new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-                new(nameof(RefreshTokenSession.UserId), userId.ToString()),
                 new(RefreshTokenIdentifier, true.ToString())
             ]
         );
@@ -88,5 +64,23 @@ internal class JwtManager(
             .WriteToken(jwtSecurityToken);
 
         return jwtToken;
+    }
+
+    public record JwtRequest
+    {
+        public required string Id { get; init; }
+        public required string UserName { get; set; }
+        public required string Email { get; set; }
+        public required string Status { get; set; }
+        public IReadOnlyDictionary<string, Permission> Accesses { get; set; } = new Dictionary<string, Permission>();
+
+        public static JwtRequest FromUser(User user, IReadOnlyDictionary<string, Permission> accesses) => new()
+        {
+            Id = user.Id.ToString(),
+            UserName = user.UserName,
+            Email = user.Email,
+            Status = user.Status.ToString(),
+            Accesses = accesses
+        };
     }
 }

@@ -122,6 +122,83 @@ namespace Identity.Infrastructure.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Identity.Domain.User.OAuthUser", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasDefaultValueSql("NEWID()");
+
+                    b.Property<string>("AuthenticationType")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("nvarchar(16)");
+
+                    b.Property<int>("ClusterId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ClusterId"));
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<string>("UserName")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.HasKey("Id");
+
+                    SqlServerKeyBuilderExtensions.IsClustered(b.HasKey("Id"), false);
+
+                    b.HasIndex("ClusterId");
+
+                    SqlServerIndexBuilderExtensions.IsClustered(b.HasIndex("ClusterId"));
+
+                    b.ToTable("OAuthUsers", "identity");
+                });
+
+            modelBuilder.Entity("Identity.Domain.User.OAuthUserRole", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasDefaultValueSql("NEWID()");
+
+                    b.Property<int>("ClusterId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ClusterId"));
+
+                    b.Property<Guid>("OAuthUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("RoleId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    SqlServerKeyBuilderExtensions.IsClustered(b.HasKey("Id"), false);
+
+                    b.HasIndex("ClusterId");
+
+                    SqlServerIndexBuilderExtensions.IsClustered(b.HasIndex("ClusterId"));
+
+                    b.HasIndex("OAuthUserId");
+
+                    b.HasIndex("RoleId");
+
+                    b.ToTable("OAuthUsersRoles", "identity");
+                });
+
             modelBuilder.Entity("Identity.Domain.User.User", b =>
                 {
                     b.Property<Guid>("Id")
@@ -289,16 +366,35 @@ namespace Identity.Infrastructure.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Identity.Domain.User.OAuthUserRole", b =>
+                {
+                    b.HasOne("Identity.Domain.User.OAuthUser", "OAuthUser")
+                        .WithMany()
+                        .HasForeignKey("OAuthUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Identity.Domain.Roles.Role", "Role")
+                        .WithMany()
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("OAuthUser");
+
+                    b.Navigation("Role");
+                });
+
             modelBuilder.Entity("Identity.Domain.User.UserRole", b =>
                 {
                     b.HasOne("Identity.Domain.Roles.Role", "Role")
-                        .WithMany("UserRoles")
+                        .WithMany("OAuthUserRoles")
                         .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("Identity.Domain.User.User", "User")
-                        .WithMany("UserRoles")
+                        .WithMany("OAuthUserRoles")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -321,14 +417,14 @@ namespace Identity.Infrastructure.Migrations
                 {
                     b.Navigation("Permissions");
 
-                    b.Navigation("UserRoles");
+                    b.Navigation("OAuthUserRoles");
                 });
 
             modelBuilder.Entity("Identity.Domain.User.User", b =>
                 {
                     b.Navigation("Tokens");
 
-                    b.Navigation("UserRoles");
+                    b.Navigation("OAuthUserRoles");
                 });
 #pragma warning restore 612, 618
         }

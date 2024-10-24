@@ -25,7 +25,7 @@ internal class ResetUserPasswordCommandHandler(
         var foundUser = await dbContext
             .Users
             .SingleOrDefaultAsync(
-                user => user.Id.Equals(command.Id),
+                user => user.Id == command.Id,
                 cancellationToken
             );
 

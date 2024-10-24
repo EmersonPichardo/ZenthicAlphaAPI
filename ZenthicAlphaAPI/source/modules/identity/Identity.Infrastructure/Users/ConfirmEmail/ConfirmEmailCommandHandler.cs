@@ -15,20 +15,21 @@ namespace Identity.Infrastructure.Users.ConfirmEmail;
 
 internal class ConfirmEmailCommandHandler(
     IdentityModuleDbContext dbContext,
-    IUserSessionService userSessionInfo,
+    IUserSessionService userSessionService,
     TokenManager tokenManager
 )
     : IRequestHandler<ConfirmEmailCommand, OneOf<Success, Failure>>
 {
-    private readonly AuthenticatedSession authenticatedSession = (AuthenticatedSession)userSessionInfo.Session;
-
     public async Task<OneOf<Success, Failure>> Handle(ConfirmEmailCommand command, CancellationToken cancellationToken)
     {
+        var useSession = await userSessionService.GetSessionAsync();
+        var authenticatedSession = (AuthenticatedSession)useSession;
+
         var foundUser = await dbContext
             .Users
             .Include(user => user.Tokens)
             .SingleOrDefaultAsync(
-                user => user.Id.Equals(authenticatedSession.Id),
+                user => user.Id == authenticatedSession.Id,
                 cancellationToken
             );
 
@@ -40,7 +41,7 @@ internal class ConfirmEmailCommandHandler(
 
         var foundUserToken = foundUser
             .Tokens
-            .FirstOrDefault(userToken => userToken.Type.Equals(TokenType.EmailConfirmation));
+            .FirstOrDefault(userToken => userToken.Type == TokenType.EmailConfirmation);
 
         if (foundUserToken is null)
             return FailureFactory.NotFound(

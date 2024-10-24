@@ -14,10 +14,10 @@ public abstract record DefaultDeleteEndpoint<TCommand>(Component Component) : IE
     public HttpStatusCode SuccessStatusCode { get; init; } = HttpStatusCode.OK;
     public IReadOnlyCollection<Type> SuccessTypes { get; init; } = [];
     public Delegate Handler { get; init; } = async (
-        ISender mediator, Guid id, CancellationToken cancellationToken) =>
+        ISender sender, Guid id, CancellationToken cancellationToken) =>
     {
         var command = new TCommand { Id = id };
-        var result = await mediator.Send(command, cancellationToken);
+        var result = await sender.Send(command, cancellationToken);
 
         return result.Match(
             ResultFactory.Ok,

@@ -15,11 +15,11 @@ public record ConfirmEmailEndpoint : IEndpoint
     public HttpStatusCode SuccessStatusCode { get; init; } = HttpStatusCode.OK;
     public IReadOnlyCollection<Type> SuccessTypes { get; init; } = [];
     public Delegate Handler { get; init; } = async (
-        ISender mediator, string token, CancellationToken cancellationToken
+        ISender sender, string token, CancellationToken cancellationToken
     ) =>
     {
         var command = new ConfirmEmailCommand { Token = token };
-        var result = await mediator.Send(command, cancellationToken);
+        var result = await sender.Send(command, cancellationToken);
 
         return result.Match(
             ResultFactory.Ok,

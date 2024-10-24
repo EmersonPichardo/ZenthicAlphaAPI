@@ -1,6 +1,7 @@
 ﻿using Identity.Infrastructure.Common.Settings;
 using Microsoft.Extensions.Options;
 using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -77,14 +78,14 @@ internal class HashingManager(
                 Salt = salt
             };
             var jsonString = JsonSerializer.Serialize(hashingStamp);
-            var bytes = EncodingHelper.GetBytes(jsonString);
+            var bytes = Encoding.Default.GetBytes(jsonString);
 
             return Convert.ToBase64String(bytes);
         }
         public static HashingStamp? Decode(string hashingStamp)
         {
             var hashingStampBytes = Convert.FromBase64String(hashingStamp);
-            var hashingStampJson = EncodingHelper.GetString(hashingStampBytes);
+            var hashingStampJson = Encoding.Default.GetString(hashingStampBytes);
 
             return JsonSerializer.Deserialize<HashingStamp>(hashingStampJson);
         }

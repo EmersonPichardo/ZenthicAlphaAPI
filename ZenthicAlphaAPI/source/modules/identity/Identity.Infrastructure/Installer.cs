@@ -2,24 +2,23 @@
 using Application.Exceptions;
 using Application.Persistence.Databases;
 using FluentValidation;
-using Identity.Domain.User;
 using Identity.Infrastructure.Common.Auth;
+using Identity.Infrastructure.Common.Auth.OAuth;
 using Identity.Infrastructure.Common.ModuleBehaviors;
 using Identity.Infrastructure.Common.Settings;
 using Identity.Infrastructure.Persistence.Databases.IdentityDbContext;
 using Infrastructure.Behaviors;
 using Infrastructure.Modularity;
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Authentication.OAuth;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 namespace Identity.Infrastructure;
 
@@ -80,7 +79,7 @@ public class Installer : IModuleInstaller
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
                     ValidateIssuerSigningKey = true,
-                    IssuerSigningKey = new SymmetricSecurityKey(EncodingHelper.GetBytes(authSettings.Jwt.Key)),
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.Default.GetBytes(authSettings.Jwt.Key)),
                     ValidateIssuer = true,
                     ValidIssuer = builder.Environment.ApplicationName,
                     ValidateAudience = false,
@@ -91,27 +90,7 @@ public class Installer : IModuleInstaller
         if (authSettings.OAuth?.Google is not null)
             authBuilder.AddGoogle(
                 GoogleDefaults.AuthenticationScheme,
-                GoogleDefaults.DisplayName,
-                options =>
-                {
-                    options.ClientId = authSettings.OAuth!.Google!.ClientId;
-                    options.ClientSecret = authSettings.OAuth!.Google!.ClientSecret;
-
-                    options.ClaimActions.MapJsonKey(nameof(AuthenticatedSession.UserName), "name");
-                    options.ClaimActions.MapJsonKey(nameof(AuthenticatedSession.Email), "email");
-
-                    options.Events = new()
-                    {
-                        OnCreatingTicket = (OAuthCreatingTicketContext context) =>
-                        {
-                            context.Identity?.AddClaim(new(
-                                nameof(AuthenticatedSession.Status), OAuthUserStatus.Active.ToString()
-                            ));
-
-                            return Task.CompletedTask;
-                        }
-                    };
-                }
+                options => GoogleOAuthConfig.ConfigureOptions(options, authSettings)
             );
     }
     private static void AddFluentValidationServices(WebApplicationBuilder builder)

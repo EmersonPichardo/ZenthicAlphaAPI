@@ -20,7 +20,7 @@ public abstract record DefaultGetListEndpoint<
     public HttpStatusCode SuccessStatusCode { get; init; } = HttpStatusCode.OK;
     public IReadOnlyCollection<Type> SuccessTypes { get; init; } = [typeof(TGetAllResponse), typeof(TGetPaginatedResponse)];
     public Delegate Handler { get; init; } = async (
-        ISender mediator, int? page, int? pageSize, string? filter, CancellationToken cancellationToken) =>
+        ISender sender, int? page, int? pageSize, string? filter, CancellationToken cancellationToken) =>
     {
         QueryType GetQueryType()
         {
@@ -32,8 +32,8 @@ public abstract record DefaultGetListEndpoint<
 
         return GetQueryType() switch
         {
-            QueryType.GetAll => await DefaultGetAllEndpoint<TGetAllQuery, TGetAllResponse>.GetAllQueryResultAsync(mediator, cancellationToken),
-            QueryType.GetPaginated => await DefaultGetPaginatedEndpoint<TGetPaginatedQuery, TGetPaginatedResponse>.GetPaginatedResultAsync(mediator, page, pageSize, filter, cancellationToken),
+            QueryType.GetAll => await DefaultGetAllEndpoint<TGetAllQuery, TGetAllResponse>.GetAllQueryResultAsync(sender, cancellationToken),
+            QueryType.GetPaginated => await DefaultGetPaginatedEndpoint<TGetPaginatedQuery, TGetPaginatedResponse>.GetPaginatedResultAsync(sender, page, pageSize, filter, cancellationToken),
             _ => ResultFactory.ProblemDetails(FailureFactory.InvalidRequest("Incorrect request", "Unknown request structure"))
         };
     };

@@ -11,15 +11,16 @@ namespace Identity.Infrastructure.Users.Update;
 
 internal class UpdateUserCommandHandler(
     IdentityModuleDbContext dbContext,
-    IUserSessionService userSessionInfo,
-    ISender mediator
+    IUserSessionService userSessionService,
+    ISender sender
 )
     : IRequestHandler<UpdateUserCommand, OneOf<Success, Failure>>
 {
-    private readonly AuthenticatedSession authenticatedSession = (AuthenticatedSession)userSessionInfo.Session;
-
     public async Task<OneOf<Success, Failure>> Handle(UpdateUserCommand command, CancellationToken cancellationToken)
     {
+        var userSession = await userSessionService.GetSessionAsync();
+        var authenticatedSession = (AuthenticatedSession)userSession;
+
         var foundUser = await dbContext
             .Users
             .FindAsync([authenticatedSession.Id], cancellationToken);
@@ -38,7 +39,7 @@ internal class UpdateUserCommandHandler(
             foundUser.Email = command.Email;
 
             var generateEmailTokenCommand = new GenerateEmailTokenCommand { UserId = authenticatedSession.Id };
-            await mediator.Send(generateEmailTokenCommand, cancellationToken);
+            await sender.Send(generateEmailTokenCommand, cancellationToken);
         }
 
         dbContext.Update(foundUser);

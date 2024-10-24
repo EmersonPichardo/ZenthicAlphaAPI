@@ -17,7 +17,7 @@ using OneOf;
 namespace Identity.Infrastructure.Users.GenerateEmailToken;
 
 internal class GenerateEmailTokenCommandHandler(
-    IUserSessionService userSessionInfo,
+    IUserSessionService userSessionService,
     IdentityModuleDbContext dbContext,
     TokenManager tokenManager,
     IOptions<AuthSettings> authSettingsOptions,
@@ -29,15 +29,18 @@ internal class GenerateEmailTokenCommandHandler(
 
     public async Task<OneOf<string, Failure>> Handle(GenerateEmailTokenCommand command, CancellationToken cancellationToken)
     {
+        var userSession = await userSessionService.GetSessionAsync();
+        var authenticatedSession = (AuthenticatedSession)userSession;
+
         var userId = command.UserId is not null
             ? command.UserId.Value
-            : ((AuthenticatedSession)userSessionInfo.Session).Id;
+            : authenticatedSession.Id;
 
         var foundUser = await dbContext
             .Users
             .Include(user => user.Tokens)
             .SingleOrDefaultAsync(
-                user => user.Id.Equals(userId),
+                user => user.Id == userId,
                 cancellationToken
             );
 
@@ -47,7 +50,7 @@ internal class GenerateEmailTokenCommandHandler(
         var foundUserToken = foundUser
             .Tokens
             .FirstOrDefault(
-                userToken => userToken.Type.Equals(TokenType.EmailConfirmation)
+                userToken => userToken.Type == TokenType.EmailConfirmation
             );
 
         var tokenResult = foundUserToken switch
