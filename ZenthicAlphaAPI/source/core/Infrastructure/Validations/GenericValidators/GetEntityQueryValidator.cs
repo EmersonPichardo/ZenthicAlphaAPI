@@ -1,6 +1,6 @@
 ﻿using Application.Queries;
+using Application.Validations;
 using FluentValidation;
-using Infrastructure.Validations.ValidationErrorMessages;
 
 namespace Infrastructure.Validations.GenericValidators;
 

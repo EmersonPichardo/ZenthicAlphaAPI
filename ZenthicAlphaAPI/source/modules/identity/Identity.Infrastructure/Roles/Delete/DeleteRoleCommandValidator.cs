@@ -1,6 +1,6 @@
-﻿using FluentValidation;
+﻿using Application.Validations;
+using FluentValidation;
 using Identity.Application.Roles.Delete;
-using Infrastructure.Validations.ValidationErrorMessages;
 
 namespace Identity.Infrastructure.Roles.Delete;
 

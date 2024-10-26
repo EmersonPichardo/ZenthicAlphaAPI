@@ -1,17 +1,17 @@
 ﻿using Domain.Modularity;
 using Identity.Application.Common.Auth;
-using Microsoft.AspNetCore.Authentication.Google;
+using Microsoft.AspNetCore.Authentication.MicrosoftAccount;
 using Microsoft.AspNetCore.Http;
 using Presentation.Endpoints;
 using System.Net;
 
 namespace Identity.Presentation.Auth;
 
-public record GoogleSignInEndpoint : IEndpoint
+public record MicrosoftSignInEndpoint : IEndpoint
 {
     public Component Component { get; init; } = 0;
     public HttpVerbose Verbose { get; init; } = HttpVerbose.Get;
-    public IReadOnlyCollection<string> Routes { get; init; } = [$"/sign-in/{GoogleDefaults.AuthenticationScheme.ToLower()}"];
+    public IReadOnlyCollection<string> Routes { get; init; } = [$"/sign-in/{MicrosoftAccountDefaults.AuthenticationScheme.ToLower()}"];
     public HttpStatusCode SuccessStatusCode { get; init; } = HttpStatusCode.OK;
     public IReadOnlyCollection<Type> SuccessTypes { get; init; } = [];
     public Delegate Handler { get; init; } = (
@@ -21,11 +21,14 @@ public record GoogleSignInEndpoint : IEndpoint
             new()
             {
                 RedirectUri =
-                    $"/api{OAuthConstants.CallbackPath}" +
-                    $"?authenticationScheme={Uri.EscapeDataString(GoogleDefaults.AuthenticationScheme)}" +
-                    $"&redirectUrl={Uri.EscapeDataString(redirectUrl)}"
+                    $"/api{OAuthConstants.CallbackPath}/" +
+                    $"?authenticationScheme={Uri.EscapeDataString(MicrosoftAccountDefaults.AuthenticationScheme)}" +
+                    $"&redirectUrl={Uri.EscapeDataString(redirectUrl)}",
+                Items = {
+                    { "prompt", "consent" }
+                }
             },
-            [GoogleDefaults.AuthenticationScheme]
+            [MicrosoftAccountDefaults.AuthenticationScheme]
         );
     };
 }

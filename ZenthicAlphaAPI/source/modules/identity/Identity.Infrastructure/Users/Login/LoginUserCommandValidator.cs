@@ -1,6 +1,6 @@
-﻿using FluentValidation;
+﻿using Application.Validations;
+using FluentValidation;
 using Identity.Application.Users.Login;
-using Infrastructure.Validations.ValidationErrorMessages;
 
 namespace Identity.Infrastructure.Users.Login;
 

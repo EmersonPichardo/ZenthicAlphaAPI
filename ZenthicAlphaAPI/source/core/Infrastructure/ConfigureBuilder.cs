@@ -1,10 +1,10 @@
-﻿using Application.Caching;
+﻿using Application.Behaviors;
+using Application.Caching;
 using Application.Events;
 using Application.Exceptions;
 using Application.Notifications.Emails;
 using FluentValidation;
 using Infrastructure.Behaviors;
-using Infrastructure.Behaviors.Settings;
 using Infrastructure.Caching;
 using Infrastructure.Events;
 using Infrastructure.Notification.Email;
@@ -20,7 +20,6 @@ using OpenTelemetry.Logs;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using StackExchange.Redis;
-using System.Diagnostics;
 using System.Reflection;
 
 namespace Infrastructure;
@@ -58,10 +57,7 @@ public static partial class ConfigureBuilder
         builder.Logging.ClearProviders();
 
         var applicationName = builder.Environment.ApplicationName;
-        var environmentName = builder.Environment.EnvironmentName;
-
         var activitySourceName = $"{applicationName}.activitySource";
-        var activitySource = new ActivitySource(activitySourceName);
 
         var openTelemetrySettings = builder.Configuration
             .GetRequiredSection(nameof(OpenTelemetrySettings))
@@ -93,11 +89,6 @@ public static partial class ConfigureBuilder
             })
             .WithTracing(tracingOptions =>
             {
-                var cacheSettings = builder.Configuration
-                    .GetRequiredSection(nameof(CacheSettings))
-                    .Get<CacheSettings>()
-                ?? throw new NotFoundException($"Setting {nameof(CacheSettings)} was not found.");
-
                 tracingOptions.AddSource(activitySourceName);
 
                 tracingOptions.AddAspNetCoreInstrumentation();

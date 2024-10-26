@@ -1,6 +1,6 @@
-﻿using FluentValidation;
+﻿using Application.Validations;
+using FluentValidation;
 using Identity.Application.Auth.OAuthCallback;
-using Infrastructure.Validations.ValidationErrorMessages;
 
 namespace Identity.Infrastructure.Auth.OAuthCallback;
 

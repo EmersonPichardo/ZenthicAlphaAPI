@@ -2,9 +2,10 @@
 using Application.Failures;
 using Application.Helpers;
 using Domain.Identity;
+using Identity.Application.Common.Auth;
+using Identity.Application.Common.Settings;
 using Identity.Application.Users.RefreshToken;
 using Identity.Infrastructure.Common.Auth;
-using Identity.Infrastructure.Common.Settings;
 using Identity.Infrastructure.Persistence.Databases.IdentityDbContext;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -62,10 +63,10 @@ internal class RefreshUserTokenCommandHandler(
         var response = new RefreshUserTokenCommandResponse
         {
             UserName = foundUser.UserName,
-            Statuses = foundUser.Status.AsString(),
+            Statuses = foundUser.Status.AsArray(),
             Accesses = userAccess.ToDictionary(
                 keyValuePair => keyValuePair.Key,
-                keyValuePair => keyValuePair.Value.AsString()
+                keyValuePair => keyValuePair.Value.AsArray()
             ),
             AccessToken = new()
             {

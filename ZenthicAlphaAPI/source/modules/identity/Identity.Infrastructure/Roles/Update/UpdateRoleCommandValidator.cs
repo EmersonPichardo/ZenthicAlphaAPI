@@ -1,10 +1,10 @@
-﻿using Domain.Modularity;
+﻿using Application.Validations;
+using Domain.Modularity;
 using FluentValidation;
 using Identity.Application.Roles.Update;
 using Identity.Infrastructure.Persistence.Databases.IdentityDbContext;
 using Identity.Infrastructure.Persistence.Databases.IdentityDbContext.Configurations;
 using Infrastructure.Validations;
-using Infrastructure.Validations.ValidationErrorMessages;
 
 namespace Identity.Infrastructure.Roles.Update;
 

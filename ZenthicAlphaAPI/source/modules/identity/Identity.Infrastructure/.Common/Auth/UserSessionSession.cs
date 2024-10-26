@@ -3,9 +3,8 @@ using Application.Failures;
 using Application.Helpers;
 using Domain.Identity;
 using Domain.Modularity;
-using Identity.Domain.User;
+using Identity.Application.Common.Auth;
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OAuth;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
@@ -54,10 +53,6 @@ internal class UserSessionSession(
             return new AnonymousSession();
         }
 
-        static bool IsAnonymousCall(IIdentity identity)
-        {
-            return !identity.IsAuthenticated;
-        }
         static async Task<(bool, AuthenticateResult authenticationResult)> IsOAuthCallAsync(HttpContext httpContext)
         {
             if (!httpContext.Request.Query.TryGetValue("authenticationScheme", out var authenticationScheme))
@@ -66,6 +61,10 @@ internal class UserSessionSession(
             var authenticationResult = await httpContext.AuthenticateAsync(authenticationScheme);
 
             return (authenticationResult.Succeeded, authenticationResult);
+        }
+        static bool IsAnonymousCall(IIdentity identity)
+        {
+            return !identity.IsAuthenticated;
         }
         static bool IsRefreshTokenCall(ClaimsPrincipal claimsPrincipal)
         {
@@ -88,24 +87,15 @@ internal class UserSessionSession(
         if (emailClaimResult.IsFailure()) return HandleFailureResult(emailClaimResult, logger);
         var email = emailClaimResult.GetValue<string>();
 
-        var statusClaimResult = claimsPrincipal.GetEnumByName<OAuthUserStatus>(nameof(AuthenticatedSession.Status));
-        if (statusClaimResult.IsFailure()) return HandleFailureResult(statusClaimResult, logger);
-        var status = statusClaimResult.GetValue<OAuthUserStatus>();
-
-        var redirectUrl = authenticationResult.Properties?.Items["redirectUrl"];
-        if (redirectUrl is null) return HandleFailureResult(FailureFactory.Generic("No redirect url found"), logger);
-
-        httpContext.Response.Cookies.Delete(
-            CookieAuthenticationDefaults.CookiePrefix + CookieAuthenticationDefaults.AuthenticationScheme
-        );
+        if (!httpContext.Request.Query.TryGetValue("redirectUrl", out var redirectUrl))
+            return HandleFailureResult(FailureFactory.Generic("No redirect url found"), logger);
 
         return new OAuthSession
         {
             AuthenticationType = authenticationType,
             UserName = userName,
             Email = email,
-            Status = status,
-            RedirectUrl = redirectUrl,
+            RedirectUrl = redirectUrl.ToString(),
         };
     }
     private static IUserSession NewAuthorizedSession(

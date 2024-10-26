@@ -1,8 +1,8 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Infrastructure.Behaviors.Settings;
+namespace Application.Behaviors;
 
-internal record PerformanceSettings
+public record PerformanceSettings
 {
     [Required]
     public required int RequestProcessingThresholdMilliseconds { get; init; }

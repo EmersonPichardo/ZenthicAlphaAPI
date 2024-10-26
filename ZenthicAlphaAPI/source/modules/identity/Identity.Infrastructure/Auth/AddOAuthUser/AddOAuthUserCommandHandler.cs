@@ -1,8 +1,8 @@
 ﻿using Application.Auth;
 using Application.Failures;
 using Identity.Application.Auth.AddOAuthUser;
+using Identity.Application.Common.Auth;
 using Identity.Domain.User;
-using Identity.Infrastructure.Common.Auth;
 using Identity.Infrastructure.Persistence.Databases.IdentityDbContext;
 using MediatR;
 using OneOf;
@@ -25,7 +25,7 @@ internal class AddOAuthUserCommandHandler(
             AuthenticationType = oauthSession.AuthenticationType,
             UserName = oauthSession.UserName,
             Email = oauthSession.Email,
-            Status = oauthSession.Status
+            Status = OAuthUserStatus.Active
         };
 
         await dbContext.OAuthUsers.AddAsync(newOAuthUser, cancellationToken);

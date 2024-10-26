@@ -1,4 +1,4 @@
-﻿using Infrastructure.Behaviors.Settings;
+﻿using Application.Behaviors;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;

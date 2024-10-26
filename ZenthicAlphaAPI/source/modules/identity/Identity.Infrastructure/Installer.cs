@@ -2,16 +2,17 @@
 using Application.Exceptions;
 using Application.Persistence.Databases;
 using FluentValidation;
+using Identity.Application.Common.Settings;
 using Identity.Infrastructure.Common.Auth;
 using Identity.Infrastructure.Common.Auth.OAuth;
 using Identity.Infrastructure.Common.ModuleBehaviors;
-using Identity.Infrastructure.Common.Settings;
 using Identity.Infrastructure.Persistence.Databases.IdentityDbContext;
 using Infrastructure.Behaviors;
 using Infrastructure.Modularity;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authentication.MicrosoftAccount;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -74,7 +75,6 @@ public class Installer : IModuleInstaller
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
                 options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
             })
-            .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme)
             .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
@@ -85,12 +85,19 @@ public class Installer : IModuleInstaller
                     ValidateAudience = false,
                     ValidateLifetime = true
                 }
-            );
+            )
+            .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme);
 
         if (authSettings.OAuth?.Google is not null)
             authBuilder.AddGoogle(
                 GoogleDefaults.AuthenticationScheme,
                 options => GoogleOAuthConfig.ConfigureOptions(options, authSettings)
+            );
+
+        if (authSettings.OAuth?.Microsoft is not null)
+            authBuilder.AddMicrosoftAccount(
+                MicrosoftAccountDefaults.AuthenticationScheme,
+                options => MicrosoftOAuthConfig.ConfigureOptions(options, authSettings)
             );
     }
     private static void AddFluentValidationServices(WebApplicationBuilder builder)

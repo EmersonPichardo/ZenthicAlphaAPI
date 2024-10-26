@@ -31,7 +31,7 @@ internal class GetRoleQueryHandler(
             .OrderBy(permission => permission.Component)
             .ToDictionary(
                 permission => permission.Component.ToString(),
-                permission => permission.RequiredAccess.AsString()
+                permission => permission.RequiredAccess.AsArray()
             );
 
         return new GetRoleQueryResponse

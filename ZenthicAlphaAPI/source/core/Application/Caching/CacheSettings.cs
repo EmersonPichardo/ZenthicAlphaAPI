@@ -1,8 +1,8 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Infrastructure.Caching;
+namespace Application.Caching;
 
-internal record CacheSettings
+public record CacheSettings
 {
     [Required]
     public required string ConnectionString { get; init; }

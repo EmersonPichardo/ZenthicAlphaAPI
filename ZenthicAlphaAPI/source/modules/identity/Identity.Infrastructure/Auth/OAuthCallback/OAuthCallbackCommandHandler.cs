@@ -6,9 +6,10 @@ using Identity.Application.Auth;
 using Identity.Application.Auth.AddOAuthUser;
 using Identity.Application.Auth.OAuthCallback;
 using Identity.Application.Auth.UpdateOAuthUser;
+using Identity.Application.Common.Auth;
+using Identity.Application.Common.Settings;
 using Identity.Domain.User;
 using Identity.Infrastructure.Common.Auth;
-using Identity.Infrastructure.Common.Settings;
 using Identity.Infrastructure.Persistence.Databases.IdentityDbContext;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -42,17 +43,17 @@ internal class OAuthCallbackCommandHandler(
             Id = oauthUser.Id.ToString(),
             UserName = oauthSession.UserName,
             Email = oauthSession.Email,
-            Status = oauthSession.Status.ToString(),
+            Status = oauthUser.Status,
             Accesses = userAccesses
         };
 
         return new OAuthCallbackCommandResponse
         {
             UserName = oauthSession.UserName,
-            Statuses = oauthSession.Status.AsString(),
+            Statuses = Enum.Parse<OAuthUserStatus>(oauthUser.Status).AsArray(),
             Accesses = userAccesses.ToDictionary(
                 keyValuePair => keyValuePair.Key,
-                keyValuePair => keyValuePair.Value.AsString()
+                keyValuePair => keyValuePair.Value.AsArray()
             ),
             AccessToken = new()
             {

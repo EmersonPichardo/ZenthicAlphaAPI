@@ -1,8 +1,8 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Identity.Infrastructure.Common.Settings;
+namespace Identity.Application.Common.Settings;
 
-internal record AuthSettings
+public record AuthSettings
 {
     [Required]
     public required JwtSettings Jwt { get; init; }
@@ -16,7 +16,7 @@ internal record AuthSettings
     [Required]
     public OAuthSettings? OAuth { get; init; }
 
-    internal record JwtSettings
+    public record JwtSettings
     {
         [Required, MinLength(64)]
         public required string Key { get; init; }
@@ -27,7 +27,7 @@ internal record AuthSettings
         [Required]
         public required TimeSpan TokenLifetime { get; init; }
     }
-    internal record HashingSettings
+    public record HashingSettings
     {
         [Required]
         public required string AlgorithmName { get; init; }
@@ -41,7 +41,7 @@ internal record AuthSettings
         [Required]
         public required int SaltBytesLength { get; init; }
     }
-    internal record TokenSettings
+    public record TokenSettings
     {
         [Required]
         public required int Length { get; init; }
@@ -52,11 +52,12 @@ internal record AuthSettings
         [Required]
         public required TimeSpan LifeTime { get; init; }
     }
-    internal record OAuthSettings
+    public record OAuthSettings
     {
         public ProviderSettings? Google { get; init; }
+        public ProviderSettings? Microsoft { get; init; }
 
-        internal record ProviderSettings
+        public record ProviderSettings
         {
             [Required]
             public required string ClientId { get; init; }

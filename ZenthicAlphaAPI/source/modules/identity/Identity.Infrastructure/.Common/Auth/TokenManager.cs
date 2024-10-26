@@ -1,4 +1,4 @@
-﻿using Identity.Infrastructure.Common.Settings;
+﻿using Identity.Application.Common.Settings;
 using Microsoft.Extensions.Options;
 
 namespace Identity.Infrastructure.Common.Auth;

@@ -1,8 +1,8 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Infrastructure.Behaviors.Settings;
+namespace Application.Behaviors;
 
-internal record OpenTelemetrySettings
+public record OpenTelemetrySettings
 {
     [Required]
     public required string IngestBaseEndpoint { get; init; }

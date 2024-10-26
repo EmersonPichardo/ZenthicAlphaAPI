@@ -1,10 +1,10 @@
 ﻿using Application.Auth;
+using Application.Validations;
 using FluentValidation;
 using Identity.Application.Users.Update;
 using Identity.Infrastructure.Persistence.Databases.IdentityDbContext;
 using Identity.Infrastructure.Persistence.Databases.IdentityDbContext.Configurations;
 using Infrastructure.Validations;
-using Infrastructure.Validations.ValidationErrorMessages;
 
 namespace Identity.Infrastructure.Users.Update;
 

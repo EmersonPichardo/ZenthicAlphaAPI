@@ -11,6 +11,6 @@ public static class EnumExtensions
     public static TEnum RemoveFlag<TEnum>(this TEnum value, TEnum flag) where TEnum : struct, Enum
         => (dynamic)value & ~(dynamic)flag;
 
-    public static string[] AsString(this Enum value)
+    public static string[] AsArray(this Enum value)
         => value.ToString().Split(", ");
 }

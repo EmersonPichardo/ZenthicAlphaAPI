@@ -1,9 +1,9 @@
 ﻿using Application.Failures;
 using Application.Helpers;
 using Domain.Identity;
+using Identity.Application.Common.Settings;
 using Identity.Application.Users.Login;
 using Identity.Infrastructure.Common.Auth;
-using Identity.Infrastructure.Common.Settings;
 using Identity.Infrastructure.Persistence.Databases.IdentityDbContext;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -61,10 +61,10 @@ internal class LoginUserCommandHandler(
         var response = new LoginUserCommandResponse
         {
             UserName = foundUser.UserName,
-            Statuses = foundUser.Status.AsString(),
+            Statuses = foundUser.Status.AsArray(),
             Accesses = userAccesses.ToDictionary(
                 keyValuePair => keyValuePair.Key,
-                keyValuePair => keyValuePair.Value.AsString()
+                keyValuePair => keyValuePair.Value.AsArray()
             ),
             AccessToken = new()
             {

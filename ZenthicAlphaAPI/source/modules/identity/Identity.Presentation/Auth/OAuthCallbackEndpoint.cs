@@ -19,7 +19,7 @@ public record OAuthCallbackEndpoint : IEndpoint
     public HttpStatusCode SuccessStatusCode { get; init; } = HttpStatusCode.OK;
     public IReadOnlyCollection<Type> SuccessTypes { get; init; } = [];
     public Delegate Handler { get; init; } = async (
-        ISender sender, string authenticationScheme, string redirectUrl, CancellationToken cancellationToken) =>
+        ISender sender, HttpContext httpContext, string authenticationScheme, string redirectUrl, CancellationToken cancellationToken) =>
     {
         var command = new OAuthCallbackCommand
         {
@@ -37,8 +37,11 @@ public record OAuthCallbackEndpoint : IEndpoint
         var jsonResponseBytes = Encoding.Default.GetBytes(jsonResponse);
         var base64Response = Convert.ToBase64String(jsonResponseBytes);
 
+        foreach (var cookie in httpContext.Request.Cookies)
+            httpContext.Response.Cookies.Delete(cookie.Key);
+
         return Results.Redirect(
-            $"{redirectUrl}?base64-response={base64Response}", true, true
+            $"{redirectUrl}?encodedResponse={base64Response}", true, true
         );
     };
 }

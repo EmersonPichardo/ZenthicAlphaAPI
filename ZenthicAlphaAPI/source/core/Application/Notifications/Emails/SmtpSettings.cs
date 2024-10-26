@@ -1,8 +1,8 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Infrastructure.Notification.Email;
+namespace Application.Notifications.Emails;
 
-internal record SmtpSettings
+public record SmtpSettings
 {
     [Required]
     public required string Server { get; init; }

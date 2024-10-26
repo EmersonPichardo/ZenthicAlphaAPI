@@ -9,18 +9,13 @@
 
   <ItemGroup>
     <Compile Include=".Common\Auth\HashingManager.cs" />
+    <Compile Include=".Common\Auth\OAuth\MicrosoftOAuthConfig.cs" />
     <Compile Include=".Common\Auth\OAuth\GoogleOAuthConfig.cs" />
-    <Compile Include=".Common\Auth\OAuth\OAuthSession.cs" />
     <Compile Include=".Common\Auth\TokenManager.cs" />
-    <Compile Include=".Common\Auth\RefreshTokenSession.cs" />
-    <Compile Include=".Common\Auth\AuthorizedSession.cs" />
     <Compile Include=".Common\Auth\UserSessionSession.cs" />
     <Compile Include=".Common\Auth\JwtManager.cs" />
     <Compile Include=".Common\Auth\PasswordManager.cs" />
-    <Compile Include=".Common\Auth\PasswordPolicy.cs" />
     <Compile Include=".Common\ModuleBehaviors\AuthorizationModuleBehavior.cs" />
-    <Compile Include=".Common\Auth\AuthSettings.cs" />
-    <Compile Include=".Common\Validations\ValidationErrorMessages\PasswordValidationErrorMessage.cs" />
     <Compile Include=".Persistence\Databases\IdentityModuleDbContext\Configurations\RoleConfiguration.cs" />
     <Compile Include=".Persistence\Databases\IdentityModuleDbContext\Configurations\RolePermissionConfiguration.cs" />
     <Compile Include=".Persistence\Databases\IdentityModuleDbContext\Configurations\OAuthUserConfiguration.cs" />
@@ -41,6 +36,7 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Authentication.Google" Version="8.0.10" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.10" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.MicrosoftAccount" Version="8.0.10" />
   </ItemGroup>
 
   <ItemGroup>

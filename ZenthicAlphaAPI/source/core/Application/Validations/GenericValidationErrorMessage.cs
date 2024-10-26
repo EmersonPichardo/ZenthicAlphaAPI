@@ -1,4 +1,4 @@
-﻿namespace Infrastructure.Validations.ValidationErrorMessages;
+﻿namespace Application.Validations;
 
 public static class GenericValidationErrorMessage
 {

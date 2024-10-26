@@ -1,11 +1,11 @@
-﻿using FluentValidation;
+﻿using Application.Validations;
+using FluentValidation;
+using Identity.Application.Common.Auth;
 using Identity.Application.Users.Add;
-using Identity.Infrastructure.Common.Auth;
-using Identity.Infrastructure.Common.Validations.ValidationErrorMessages;
+using Identity.Application.Validations;
 using Identity.Infrastructure.Persistence.Databases.IdentityDbContext;
 using Identity.Infrastructure.Persistence.Databases.IdentityDbContext.Configurations;
 using Infrastructure.Validations;
-using Infrastructure.Validations.ValidationErrorMessages;
 
 namespace Identity.Infrastructure.Users.Add;
 

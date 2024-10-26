@@ -1,7 +1,8 @@
 ﻿using Application.Auth;
 using Domain.Modularity;
+using Identity.Application.Common.Auth;
+using Identity.Application.Common.Settings;
 using Identity.Domain.User;
-using Identity.Infrastructure.Common.Settings;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
