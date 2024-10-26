@@ -77,18 +77,15 @@ internal class OAuthCallbackCommandHandler(
                 .ThenInclude(entity => entity.Role)
                     .ThenInclude(entity => entity.Permissions)
             .FirstOrDefaultAsync(
-                oauthUser => oauthUser.Email == oauthSession.Email,
+                oauthUser
+                    => oauthUser.AuthenticationType == oauthSession.AuthenticationType
+                    && oauthUser.Email == oauthSession.Email,
                 cancellationToken
             );
 
         if (foundOAuthUser is null)
         {
-            var addOAuthUserCommand = new AddOAuthUserCommand
-            {
-                UserName = oauthSession.UserName,
-                Email = oauthSession.Email
-            };
-
+            var addOAuthUserCommand = new AddOAuthUserCommand();
             var addOAuthUserCommandResult = await sender.Send(addOAuthUserCommand, cancellationToken);
             if (addOAuthUserCommandResult.IsFailure()) return addOAuthUserCommandResult.GetFailure();
 
@@ -102,13 +99,7 @@ internal class OAuthCallbackCommandHandler(
             if (foundOAuthUser.Status.HasFlag(OAuthUserStatus.Inactive))
                 return FailureFactory.UnauthorizedAccess();
 
-            var updateOAuthUserCommand = new UpdateOAuthUserCommand
-            {
-                Id = foundOAuthUser.Id,
-                UserName = oauthSession.UserName,
-                Email = oauthSession.Email
-            };
-
+            var updateOAuthUserCommand = new UpdateOAuthUserCommand();
             var updateOAuthUserCommandResult = await sender.Send(updateOAuthUserCommand, cancellationToken);
             if (updateOAuthUserCommandResult.IsFailure()) return updateOAuthUserCommandResult.GetFailure();
 
