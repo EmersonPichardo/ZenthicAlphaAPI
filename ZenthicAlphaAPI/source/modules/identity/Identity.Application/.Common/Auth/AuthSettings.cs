@@ -13,7 +13,6 @@ public record AuthSettings
     [Required]
     public required TokenSettings Token { get; init; }
 
-    [Required]
     public OAuthSettings? OAuth { get; init; }
 
     public record JwtSettings
@@ -56,6 +55,7 @@ public record AuthSettings
     {
         public ProviderSettings? Google { get; init; }
         public ProviderSettings? Microsoft { get; init; }
+        public ProviderSettings? Facebook { get; init; }
 
         public record ProviderSettings
         {

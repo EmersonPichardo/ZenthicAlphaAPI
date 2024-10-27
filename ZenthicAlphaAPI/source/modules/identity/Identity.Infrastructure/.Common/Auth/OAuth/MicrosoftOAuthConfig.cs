@@ -1,4 +1,4 @@
-﻿using Application.Auth;
+﻿using Identity.Application.Common.Auth;
 using Identity.Application.Common.Settings;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.MicrosoftAccount;
@@ -13,7 +13,7 @@ internal static class MicrosoftOAuthConfig
         options.ClientId = authSettings.OAuth!.Microsoft!.ClientId;
         options.ClientSecret = authSettings.OAuth!.Microsoft!.ClientSecret;
 
-        options.ClaimActions.MapJsonKey(nameof(AuthenticatedSession.UserName), "displayName");
-        options.ClaimActions.MapCustomJson(nameof(AuthenticatedSession.Email), user => user.GetString("mail") ?? user.GetString("userPrincipalName"));
+        options.ClaimActions.MapJsonKey(nameof(OAuthSession.UserName), "displayName");
+        options.ClaimActions.MapCustomJson(nameof(OAuthSession.Email), user => user.GetString("mail") ?? user.GetString("userPrincipalName"));
     }
 }

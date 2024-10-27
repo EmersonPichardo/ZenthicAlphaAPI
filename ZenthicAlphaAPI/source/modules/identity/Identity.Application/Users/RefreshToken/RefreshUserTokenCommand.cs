@@ -1,8 +1,8 @@
-﻿using Application.Auth;
-using Application.Commands;
+﻿using Application.Commands;
+using Identity.Application.Auth;
 
 namespace Identity.Application.Users.RefreshToken;
 
-[AllowAnonymous]
+[AuthorizeRefreshToken]
 public record RefreshUserTokenCommand
     : ICommand<RefreshUserTokenCommandResponse>;

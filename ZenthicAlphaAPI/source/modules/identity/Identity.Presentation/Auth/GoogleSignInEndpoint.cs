@@ -22,10 +22,10 @@ public record GoogleSignInEndpoint : IEndpoint
             {
                 RedirectUri =
                     $"/api{OAuthConstants.CallbackPath}" +
-                    $"?authenticationScheme={Uri.EscapeDataString(GoogleDefaults.AuthenticationScheme)}" +
-                    $"&redirectUrl={Uri.EscapeDataString(redirectUrl)}"
+                    $"?authenticationScheme={GoogleDefaults.AuthenticationScheme}" +
+                    $"&redirectUrl={redirectUrl}"
             },
-            [GoogleDefaults.AuthenticationScheme]
+                [GoogleDefaults.AuthenticationScheme]
         );
     };
 }

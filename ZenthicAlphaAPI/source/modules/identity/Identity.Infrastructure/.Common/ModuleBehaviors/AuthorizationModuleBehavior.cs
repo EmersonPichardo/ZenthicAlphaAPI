@@ -3,9 +3,9 @@ using Application.Failures;
 using Application.Helpers;
 using Domain.Identity;
 using Domain.Modularity;
+using Identity.Application.Auth;
 using Identity.Application.Common.Auth;
 using Identity.Application.Users.ChangePassword;
-using Identity.Application.Users.RefreshToken;
 using Infrastructure.Behaviors;
 using OneOf;
 using OneOf.Types;
@@ -37,7 +37,7 @@ internal class AuthorizationModuleBehavior(
                 : FailureFactory.UnauthorizedAccess(),
 
             RefreshTokenSession
-                => request is RefreshUserTokenCommand
+                => HasAttribute<TRequest, AuthorizeRefreshTokenAttribute>()
                 ? new Success()
                 : FailureFactory.UnauthorizedAccess(),
 

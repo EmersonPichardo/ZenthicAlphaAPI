@@ -28,9 +28,7 @@ internal class RefreshUserTokenCommandHandler(
     public async Task<OneOf<RefreshUserTokenCommandResponse, Failure>> Handle(RefreshUserTokenCommand command, CancellationToken cancellationToken)
     {
         var userSession = await userSessionService.GetSessionAsync();
-
-        if (userSession is not RefreshTokenSession refreshTokenSession)
-            return FailureFactory.UnauthorizedAccess();
+        var refreshTokenSession = (RefreshTokenSession)userSession;
 
         var foundUser = await dbContext
             .Users

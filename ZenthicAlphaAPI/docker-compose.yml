@@ -7,6 +7,10 @@ services:
         - identity_connection_string
         - oauth_google_client_id
         - oauth_google_client_secret
+        - oauth_microsoft_client_id
+        - oauth_microsoft_client_secret
+        - oauth_facebook_client_id
+        - oauth_facebook_client_secret
       context: .
       dockerfile: source/ZenthicAlpha/Dockerfile
     depends_on:
@@ -57,3 +61,11 @@ secrets:
     environment: AuthSettings__OAuth__Google__ClientId
   oauth_google_client_secret:
     environment: AuthSettings__OAuth__Google__ClientSecret
+  oauth_microsoft_client_id:
+    environment: AuthSettings__OAuth__Microsoft__ClientId
+  oauth_microsoft_client_secret:
+    environment: AuthSettings__OAuth__Microsoft__ClientSecret
+  oauth_facebook_client_id:
+    environment: AuthSettings__OAuth__Facebook__ClientId
+  oauth_facebook_client_secret:
+    environment: AuthSettings__OAuth__Facebook__ClientSecret

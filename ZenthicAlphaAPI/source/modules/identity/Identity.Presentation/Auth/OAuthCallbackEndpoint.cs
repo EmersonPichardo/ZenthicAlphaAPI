@@ -3,6 +3,8 @@ using Identity.Application.Auth.OAuthCallback;
 using Identity.Application.Common.Auth;
 using MediatR;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using OneOf;
 using Presentation.Endpoints;
 using Presentation.Result;
 using System.Net;
@@ -28,12 +30,12 @@ public record OAuthCallbackEndpoint : IEndpoint
 
         var result = await sender.Send(command, cancellationToken);
 
-        var response = result.Match<object>(
+        var response = result.Match<OneOf<OAuthCallbackCommandResponse, ProblemDetails>>(
             successResponse => successResponse,
-            ProblemFactory.CreateFromFailure
+            failure => ProblemFactory.CreateFromFailure(failure)
         );
 
-        var jsonResponse = JsonSerializer.Serialize(response);
+        var jsonResponse = JsonSerializer.Serialize(response.Value);
         var jsonResponseBytes = Encoding.Default.GetBytes(jsonResponse);
         var base64Response = Convert.ToBase64String(jsonResponseBytes);
 

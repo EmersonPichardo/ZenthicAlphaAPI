@@ -9,6 +9,8 @@
 
   <ItemGroup>
     <Compile Include=".Common\Auth\AuthorizedSession.cs" />
+    <Compile Include=".Common\Auth\AuthorizeRefreshTokenAttribute.cs" />
+    <Compile Include=".Common\Auth\AuthorizeOAuthAttribute.cs" />
     <Compile Include=".Common\Auth\AuthSettings.cs" />
     <Compile Include=".Common\Auth\OAuthConstants.cs" />
     <Compile Include=".Common\Auth\OAuthSession.cs" />

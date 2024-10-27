@@ -10,6 +10,7 @@ using Identity.Infrastructure.Persistence.Databases.IdentityDbContext;
 using Infrastructure.Behaviors;
 using Infrastructure.Modularity;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.Facebook;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authentication.MicrosoftAccount;
@@ -98,6 +99,12 @@ public class Installer : IModuleInstaller
             authBuilder.AddMicrosoftAccount(
                 MicrosoftAccountDefaults.AuthenticationScheme,
                 options => MicrosoftOAuthConfig.ConfigureOptions(options, authSettings)
+            );
+
+        if (authSettings.OAuth?.Facebook is not null)
+            authBuilder.AddFacebook(
+                FacebookDefaults.AuthenticationScheme,
+                options => FacebookOAuthConfig.ConfigureOptions(options, authSettings)
             );
     }
     private static void AddFluentValidationServices(WebApplicationBuilder builder)
